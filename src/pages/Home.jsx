@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation, initReactI18next } from "react-i18next";
 import i18n from "i18next";
+import '../styling/Home.css'
 
 // ══ i18n INIT ══
 const resources = {
@@ -354,54 +355,32 @@ const CARDS = [
   },
 ];
 
-// ══ SCROLL HIJACK — FIXED ══
-// المبدأ:
-// - الـ wrapper يأخذ height = 100vh * N (sticky height + scroll distance)
-// - الـ sticky تبقى ثابتة (position:sticky top:0 height:100vh)
-// - نحسب كم الـ wrapper اتسحب فوق الـ viewport (= -rect.top)
-// - نحوّل هاد الـ scroll لـ translateX على الـ strip
-// - الـ strip عرضها = N * trackWidth، وكل slide عرضها = trackWidth
-// - RTL و LTR: الـ strip دايماً مرتبة LTR في الـ DOM
-//   لأن flex يتبع الـ dir تلقائياً في RTL → الكروت بتظهر معكوسة
-//   الحل: نحدد direction:ltr دايماً على الـ strip، ونبدأ من الكارد الأول ويسار
-//   وبـ RTL نبدأ translate من 0 ويروح بالسالب (يسار)
-//   وبـ LTR نبدأ translate من 0 ويروح بالسالب كمان (نفس الاتجاه)
+// ══ SCROLL HIJACK ══
 function ScrollHijack({ isAr, t }) {
   const wrapRef  = useRef(null);
   const stripRef = useRef(null);
   const [idx, setIdx]     = useState(0);
   const [pct, setPct]     = useState(0);
   const N      = CARDS.length;
-  const offRef = useRef(0);   // القيمة الحالية المـ lerp-ed بالـ px
-  const tgtRef = useRef(0);   // القيمة المستهدفة بالـ px
+  const offRef = useRef(0);
+  const tgtRef = useRef(0);
   const rafRef = useRef(null);
 
-  // ── حسابات الأبعاد ──
   const updateSizes = useCallback(() => {
     const wrapper = wrapRef.current;
     const strip   = stripRef.current;
     if (!wrapper || !strip) return;
-
     const vh = window.innerHeight;
-    // الـ wrapper = vh * N:
-    //   - أول vh للـ sticky section نفسها
-    //   - (N-1) * vh مسافة إضافية للسكرول
     wrapper.style.height = `${vh * N}px`;
-
     const track = strip.parentElement;
     if (!track) return;
     const w = track.offsetWidth;
-
-    // الـ strip تمتد أفقياً لعدد الكروت
     strip.style.width = `${N * w}px`;
-
-    // كل slide يأخذ عرض الـ track بالضبط
     strip.querySelectorAll(".aspu-sh-slide").forEach((s) => {
       s.style.width = `${w}px`;
     });
   }, [N]);
 
-  // ── RAF loop ──
   useEffect(() => {
     updateSizes();
     window.addEventListener("resize", updateSizes);
@@ -413,33 +392,18 @@ function ScrollHijack({ isAr, t }) {
         rafRef.current = requestAnimationFrame(tick);
         return;
       }
-
-      // كم px اتسحب الـ wrapper فوق الـ viewport
       const rect     = wrapper.getBoundingClientRect();
       const scrolled = Math.max(0, -rect.top);
-
-      // أقصى مسافة سكرول = (N-1) * vh
       const maxScroll = window.innerHeight * (N - 1);
       const clamped   = Math.min(maxScroll, scrolled);
-
-      // عرض الـ track (= عرض slide واحد)
       const trackW   = strip.parentElement?.offsetWidth || window.innerWidth;
-      // القيمة المستهدفة: من 0 لـ (N-1)*trackW
       const progress = maxScroll > 0 ? clamped / maxScroll : 0;
       tgtRef.current = progress * trackW * (N - 1);
-
-      // Lerp للـ smoothness
       offRef.current += (tgtRef.current - offRef.current) * 0.12;
-
-      // دايماً translateX سالب — نحرك لليسار بغض النظر عن RTL/LTR
-      // لأننا فرضنا direction:ltr على الـ strip
       strip.style.transform = `translateX(${-offRef.current}px)`;
-
-      // تحديث الـ index والـ progress bar
       const newIdx = Math.min(N - 1, Math.round(progress * (N - 1)));
       setIdx(newIdx);
       setPct(Math.min(100, progress * 100));
-
       rafRef.current = requestAnimationFrame(tick);
     };
 
@@ -456,8 +420,6 @@ function ScrollHijack({ isAr, t }) {
   return (
     <div ref={wrapRef} className="aspu-sh-wrapper">
       <div className="aspu-sh-sticky">
-
-        {/* Header */}
         <div className="aspu-sh-header">
           <div>
             <div className="aspu-sh-ey">{tr.eyebrow}</div>
@@ -476,12 +438,7 @@ function ScrollHijack({ isAr, t }) {
           </div>
         </div>
 
-        {/* Track + Strip */}
         <div className="aspu-sh-track">
-          {/*
-            dir="ltr" على الـ strip ضروري:
-            بدونه في RTL، الـ flex يعكس ترتيب الكروت ويبدأ translateX بالاتجاه الغلط
-          */}
           <div ref={stripRef} className="aspu-sh-strip" dir="ltr">
             {CARDS.map((card, i) => (
               <div key={i} className="aspu-sh-slide">
@@ -491,14 +448,12 @@ function ScrollHijack({ isAr, t }) {
           </div>
         </div>
 
-        {/* Footer */}
         <div className="aspu-sh-foot">
           <p className="aspu-sh-hint">{tr.scrollHint}</p>
           <button className="aspu-btn-gold sm">
             {tr.viewAll} <span className="arr">→</span>
           </button>
         </div>
-
       </div>
     </div>
   );
@@ -562,13 +517,11 @@ export default function ASPUInsight() {
   const cursorRef = useRef(null);
   const isAr  = lang === "ar";
 
-  // ── Theme ──
   const setTheme = useCallback((th) => {
     setThemeState(th);
     document.documentElement.setAttribute("data-theme", th);
   }, []);
 
-  // ── Lang ──
   const setLang = useCallback((l) => {
     setLangState(l);
     i18nInst.changeLanguage(l);
@@ -576,20 +529,17 @@ export default function ASPUInsight() {
     document.documentElement.setAttribute("lang", l);
   }, [i18nInst]);
 
-  // ── On mount ──
   useEffect(() => {
     setTheme("light");
     setLang("ar");
   }, []);
 
-  // ── Scroll ──
   useEffect(() => {
     const h = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", h, { passive: true });
     return () => window.removeEventListener("scroll", h);
   }, []);
 
-  // ── Rotating word ──
   const rotArr = t("hero.rotate", { returnObjects: true });
   useEffect(() => {
     const iv = setInterval(() => {
@@ -602,14 +552,12 @@ export default function ASPUInsight() {
     return () => clearInterval(iv);
   }, [rotArr.length]);
 
-  // ── ESC to close menu ──
   useEffect(() => {
     const h = (e) => { if (e.key === "Escape") setMenuOpen(false); };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
   }, []);
 
-  // ── Cursor glow ──
   useEffect(() => {
     const el = cursorRef.current;
     if (!el || window.matchMedia("(pointer:coarse)").matches) {
@@ -632,7 +580,6 @@ export default function ASPUInsight() {
     };
   }, []);
 
-  // ── Body overflow ──
   useEffect(() => {
     document.body.style.overflow = menuOpen ? "hidden" : "";
   }, [menuOpen]);
@@ -751,7 +698,11 @@ export default function ASPUInsight() {
             <button className={`aspu-mtp-btn${lang === "en" ? " on" : ""}`}
               onClick={() => setLang("en")}>EN</button>
           </div>
-          <button className="aspu-menu-login-btn">{menuT.login}</button>
+
+          {/* ══ LOGIN BUTTON → /Auth ══ */}
+          <a href="/Auth" className="aspu-menu-login-btn">
+            {menuT.login}
+          </a>
         </div>
       </div>
 
