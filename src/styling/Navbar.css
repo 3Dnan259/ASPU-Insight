@@ -1,0 +1,439 @@
+/* ════════════════════════════════════════════════
+   NAVBAR.CSS
+   Styles for: Fullscreen Menu + Navbar
+   Relies on CSS variables defined in Home.css
+   (--bg, --tx, --ac, --bd, --tx2, --tx3, --tr, etc.)
+   Make sure Home.css (or the file defining :root /
+   [data-theme] tokens) is loaded on the page.
+════════════════════════════════════════════════ */
+
+/* ════════════════════════════════════════════════
+   FULLSCREEN MENU
+════════════════════════════════════════════════ */
+.aspu-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  background: #060708;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  clip-path: inset(0 0 100% 0);
+  pointer-events: none;
+  transition: clip-path 0.7s cubic-bezier(0.87, 0, 0.13, 1);
+}
+
+.aspu-menu.open {
+  clip-path: inset(0 0 0% 0);
+  pointer-events: auto;
+}
+
+.aspu-menu-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 clamp(24px, 5%, 80px);
+  height: 72px;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  opacity: 0;
+  transform: translateY(-16px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+  transition-delay: 0.3s;
+}
+
+.aspu-menu-top.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.aspu-menu-logo-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.aspu-menu-ln {
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+.aspu-menu-ls {
+  font-size: 9px;
+  color: rgba(255, 255, 255, 0.3);
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+}
+
+.aspu-menu-close-btn {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: transparent;
+  border: 1.5px solid rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.7);
+  padding: 8px 20px;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  font-family: inherit;
+  transition: border-color 0.22s, color 0.22s, transform 0.18s;
+}
+
+.aspu-menu-close-btn:hover {
+  border-color: #C4A55A;
+  color: #C4A55A;
+  transform: scale(1.03);
+}
+
+.aspu-menu-body {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.aspu-menu-links {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 0 clamp(24px, 5%, 80px);
+  overflow-y: auto;
+  align-content: center;
+}
+
+.aspu-ml-wrap { overflow: hidden; }
+
+.aspu-menu-link {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(18px, 2.8vh, 38px) 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  text-decoration: none;
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(100%);
+  transition:
+    opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.26s ease;
+}
+
+.aspu-menu-link.entering {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.aspu-menu-links .aspu-ml-wrap:nth-child(odd) .aspu-menu-link {
+  border-inline-end: 1px solid rgba(255, 255, 255, 0.06);
+  padding-inline-end: clamp(24px, 5%, 80px);
+}
+
+.aspu-menu-links .aspu-ml-wrap:nth-child(even) .aspu-menu-link {
+  padding-inline-start: clamp(24px, 5%, 80px);
+}
+
+.aspu-menu-links.has-hover .aspu-menu-link {
+  opacity: 0.15;
+  filter: blur(3px);
+}
+
+.aspu-menu-links.has-hover .aspu-menu-link.hov {
+  opacity: 1;
+  filter: blur(0);
+}
+
+.aspu-menu-link.hov .aspu-ml-name,
+.aspu-menu-link.hov .aspu-ml-sub {
+  color: #C4A55A !important;
+}
+
+.aspu-ml-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.aspu-ml-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: clamp(1.9rem, 4.8vw, 4.5rem);
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.82);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  transition: color 0.2s;
+}
+
+.aspu-ml-num {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.2);
+  letter-spacing: 0.5px;
+}
+
+.aspu-ml-sub {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.24);
+  margin-top: 4px;
+  transition: color 0.2s;
+}
+
+.aspu-menu-preview {
+  width: 230px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-inline-start: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.012);
+}
+
+.aspu-preview-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 32px;
+  opacity: 0;
+  transform: scale(0.9) translateY(12px);
+  transition:
+    opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.36s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+.aspu-preview-inner.show {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+}
+
+.aspu-preview-ring {
+  width: 108px;
+  height: 108px;
+  border-radius: 50%;
+  border: 1px solid rgba(196, 165, 90, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(196, 165, 90, 0.05);
+  position: relative;
+}
+
+.aspu-preview-ring-spin {
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 1px solid rgba(196, 165, 90, 0.15);
+  border-top-color: #C4A55A;
+  animation: pringSpin 7s linear infinite;
+}
+
+@keyframes pringSpin { to { transform: rotate(360deg); } }
+
+.aspu-preview-divider {
+  width: 34px;
+  height: 1px;
+  background: rgba(196, 165, 90, 0.35);
+}
+
+.aspu-preview-name {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 24px;
+  letter-spacing: 0.08em;
+  color: #C4A55A;
+  text-align: center;
+}
+
+.aspu-preview-tag {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.26);
+  text-align: center;
+}
+
+.aspu-menu-foot {
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 14px clamp(24px, 5%, 80px);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.45s ease, transform 0.45s ease;
+  transition-delay: 0.55s;
+}
+
+.aspu-menu-foot.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.aspu-mf-label {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.26);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-inline-end: auto;
+}
+
+.aspu-menu-tpill {
+  display: flex;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 100px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.aspu-mtp-btn {
+  height: 26px;
+  padding: 0 11px;
+  border-radius: 100px;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.3);
+  background: transparent;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.aspu-mtp-btn.on {
+  background: rgba(255, 255, 255, 0.14);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.aspu-menu-login-btn {
+  border: 1.5px solid #C4A55A;
+  color: #C4A55A;
+  padding: 8px 18px;
+  border-radius: 9px;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  font-family: inherit;
+  transition: background 0.22s;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.aspu-menu-login-btn:hover {
+  background: rgba(196, 165, 90, 0.1);
+}
+
+/* ════════════════════════════════════════════════
+   NAVBAR
+════════════════════════════════════════════════ */
+.aspu-nav {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 200;
+  height: 68px;
+  display: flex;
+  align-items: center;
+  padding: 0 clamp(16px, 5%, 80px);
+  transition: all var(--tr);
+}
+
+.aspu-nav.scrolled {
+  background: var(--nav-bg);
+  backdrop-filter: blur(20px) saturate(1.4);
+  border-bottom: 1px solid var(--bd);
+}
+
+.aspu-nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  text-decoration: none;
+}
+
+.aspu-logo-n {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--tx);
+  font-family: 'Playfair Display', serif;
+}
+
+.aspu-logo-s {
+  font-size: 9px;
+  color: var(--tx3);
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
+}
+
+.aspu-nav-space { flex: 1; }
+
+.aspu-nav-menu-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 4px 0;
+}
+
+.aspu-nmb-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--tx2);
+  transition: color 0.2s;
+}
+
+.aspu-nav-menu-btn:hover .aspu-nmb-label { color: var(--ac); }
+
+.aspu-nmb-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 4.5px;
+  width: 22px;
+}
+
+.aspu-nmb-line {
+  height: 1.5px;
+  background: var(--tx2);
+  border-radius: 2px;
+  transform-origin: center;
+  transition:
+    transform 0.32s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.2s,
+    width 0.22s,
+    background 0.2s;
+}
+
+.aspu-nmb-line.l2 { width: 14px; }
+
+.aspu-nav-menu-btn:hover .aspu-nmb-line { background: var(--ac); }
+.aspu-nav-menu-btn:hover .aspu-nmb-line.l2 { width: 22px; }
+
+.aspu-nav-menu-btn.is-open .l1 { transform: translateY(6px) rotate(45deg); }
+.aspu-nav-menu-btn.is-open .l2 { opacity: 0; transform: scaleX(0); }
+.aspu-nav-menu-btn.is-open .l3 { transform: translateY(-6px) rotate(-45deg); }
+
+/* ════════════════════════════════════════════════
+   RESPONSIVE — Navbar / Fullscreen Menu only
+════════════════════════════════════════════════ */
+@media (max-width: 700px) {
+  .aspu-menu-links { grid-template-columns: 1fr; }
+  .aspu-menu-links .aspu-ml-wrap:nth-child(odd)  .aspu-menu-link { border-inline-end: none; padding-inline-end: 0; }
+  .aspu-menu-links .aspu-ml-wrap:nth-child(even) .aspu-menu-link { padding-inline-start: 0; }
+  .aspu-menu-preview { display: none; }
+}

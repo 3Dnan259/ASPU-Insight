@@ -2,6 +2,9 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation, initReactI18next } from "react-i18next";
 import i18n from "i18next";
 import '../styling/Home.css'
+import { RESEARCH_CARDS, GALLERY_IMAGES } from '../MokData/Data.js';
+import Navbar from '../components/Navbar.jsx';
+import Footer from '../components/Footer.jsx'
 
 // ══ i18n INIT ══
 const resources = {
@@ -77,20 +80,20 @@ const resources = {
       features: {
         eyebrow: "مميزات المنصة", title: "منصة أكاديمية متكاملة",
         items: [
-          { icon: "🧠", num: "01", h: "كشف التشابه بالذكاء الاصطناعي", d: "نماذج BERT العربية تحلل محتوى كل بحث دلالياً.", tag: "NLP · BERT ↗" },
-          { icon: "📋", num: "02", h: "سير عمل المراجعة الأكاديمية", d: "من تقديم البحث إلى الموافقة — كل خطوة مرئية لكل الأطراف.", tag: "Multi-role ↗" },
-          { icon: "📚", num: "03", h: "أرشيف بحثي منظم", d: "جميع الأبحاث قابلة للبحث والتصفية حسب التخصص والسنة.", tag: "Full-text Search ↗" },
-          { icon: "✅", num: "04", h: "تدقيق المراجع IEEE", d: "نظام آلي يرصد أخطاء التوثيق قبل التسليم النهائي.", tag: "Auto-validate ↗" },
-          { icon: "📊", num: "05", h: "لوحة النزاهة العلمية", d: "إحصائيات شفافة عن معدلات التشابه ونسب القبول والرفض.", tag: "Analytics ↗" },
-          { icon: "🌐", num: "06", h: "ثنائي اللغة بالكامل", d: "واجهة كاملة بالعربية والإنجليزية مع دعم RTL احترافي.", tag: "AR · EN · RTL ↗" },
+          { num: "01", icon: "🤖", h: "كشف التشابه بالذكاء الاصطناعي", d: "نماذج BERT العربية تحلل محتوى كل بحث دلالياً.", tag: "NLP · BERT ↗" },
+          { num: "02", icon: "🔄", h: "سير عمل المراجعة الأكاديمية", d: "من تقديم البحث إلى الموافقة — كل خطوة مرئية لكل الأطراف.", tag: "Multi-role ↗" },
+          { num: "03", icon: "🗂️", h: "أرشيف بحثي منظم", d: "جميع الأبحاث قابلة للبحث والتصفية حسب التخصص والسنة.", tag: "Full-text Search ↗" },
+          { num: "04", icon: "📎", h: "تدقيق المراجع IEEE", d: "نظام آلي يرصد أخطاء التوثيق قبل التسليم النهائي.", tag: "Auto-validate ↗" },
+          { num: "05", icon: "📊", h: "لوحة النزاهة العلمية", d: "إحصائيات شفافة عن معدلات التشابه ونسب القبول والرفض.", tag: "Analytics ↗" },
+          { num: "06", icon: "🌐", h: "ثنائي اللغة بالكامل", d: "واجهة كاملة بالعربية والإنجليزية مع دعم RTL احترافي.", tag: "AR · EN · RTL ↗" },
         ],
       },
       footer: {
         brand: "مجلة رقمية أكاديمية تسلط الضوء على أبحاث الطلبة وإنجازاتهم في جامعة الشام الخاصة.",
         cols: [
-          { title: "الأبحاث", links: ["آخر الإضافات","الأكثر تقييماً","حسب التخصص","الأرشيف"] },
-          { title: "للطلبة",  links: ["تقديم بحث","إرشادات النشر","فحص التشابه"] },
-          { title: "للأساتذة",links: ["لوحة المراجعة","تقارير النزاهة","إدارة اللجنة"] },
+          { title: "الأبحاث", links: ["آخر الإضافات", "الأكثر تقييماً", "حسب التخصص", "الأرشيف"] },
+          { title: "للطلبة",  links: ["تقديم بحث", "إرشادات النشر", "فحص التشابه"] },
+          { title: "للأساتذة", links: ["لوحة المراجعة", "تقارير النزاهة", "إدارة اللجنة"] },
         ],
         copy: "© 2025 ASPU Insight — جامعة الشام الخاصة",
         sub: "مشروع تخرج · 2025–2026",
@@ -169,20 +172,20 @@ const resources = {
       features: {
         eyebrow: "Platform Features", title: "A Complete Academic Platform",
         items: [
-          { icon: "🧠", num: "01", h: "AI Similarity Detection", d: "Arabic BERT models semantically analyze every submitted paper.", tag: "NLP · BERT ↗" },
-          { icon: "📋", num: "02", h: "Academic Review Workflow", d: "From submission to approval — every step visible to all parties.", tag: "Multi-role ↗" },
-          { icon: "📚", num: "03", h: "Organised Research Archive", d: "All research searchable and filterable by discipline and year.", tag: "Full-text Search ↗" },
-          { icon: "✅", num: "04", h: "IEEE Reference Validation", d: "An automated system flags referencing errors before final submission.", tag: "Auto-validate ↗" },
-          { icon: "📊", num: "05", h: "Integrity Dashboard", d: "Transparent statistics on similarity rates and approval ratios.", tag: "Analytics ↗" },
-          { icon: "🌐", num: "06", h: "Fully Bilingual", d: "Full Arabic and English interface with professional RTL support.", tag: "AR · EN · RTL ↗" },
+          { num: "01", icon: "🤖", h: "AI Similarity Detection", d: "Arabic BERT models semantically analyze every submitted paper.", tag: "NLP · BERT ↗" },
+          { num: "02", icon: "🔄", h: "Academic Review Workflow", d: "From submission to approval — every step visible to all parties.", tag: "Multi-role ↗" },
+          { num: "03", icon: "🗂️", h: "Organised Research Archive", d: "All research searchable and filterable by discipline and year.", tag: "Full-text Search ↗" },
+          { num: "04", icon: "📎", h: "IEEE Reference Validation", d: "An automated system flags referencing errors before final submission.", tag: "Auto-validate ↗" },
+          { num: "05", icon: "📊", h: "Integrity Dashboard", d: "Transparent statistics on similarity rates and approval ratios.", tag: "Analytics ↗" },
+          { num: "06", icon: "🌐", h: "Fully Bilingual", d: "Full Arabic and English interface with professional RTL support.", tag: "AR · EN · RTL ↗" },
         ],
       },
       footer: {
         brand: "A digital academic journal spotlighting student research at Al-Sham Private University.",
         cols: [
-          { title: "Research", links: ["Latest","Top Rated","By Discipline","Archive"] },
-          { title: "Students", links: ["Submit Paper","Guidelines","Similarity Check"] },
-          { title: "Faculty",  links: ["Review Panel","Integrity Reports","Committee"] },
+          { title: "Research", links: ["Latest", "Top Rated", "By Discipline", "Archive"] },
+          { title: "Students", links: ["Submit Paper", "Guidelines", "Similarity Check"] },
+          { title: "Faculty",  links: ["Review Panel", "Integrity Reports", "Committee"] },
         ],
         copy: "© 2025 ASPU Insight — Al-Sham Private University",
         sub: "Graduation Project · 2025–2026",
@@ -296,169 +299,6 @@ function RevealSection({ sec, isAr }) {
   );
 }
 
-// ══ RESEARCH CARDS DATA ══
-const CARDS = [
-  {
-    img: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=600&q=75&fit=crop",
-    tags: [{ cls: "rt-t", ar: "ذكاء اصطناعي", en: "AI" }, { cls: "rt-b", ar: "معالجة اللغة", en: "NLP" }],
-    titleAr: "نظام تلقائي لكشف التشابه الدلالي في مشاريع التخرج باستخدام نماذج اللغة الكبيرة",
-    titleEn: "Automated Semantic Similarity Detection in Graduation Projects Using LLMs",
-    bodyAr: "يقترح هذا البحث منهجية متكاملة لمعالجة مشكلة تكرار مواضيع مشاريع التخرج، من خلال توظيف نماذج BERT العربية لتحليل التشابه الدلالي العميق.",
-    bodyEn: "This research proposes a comprehensive methodology using Arabic BERT models for deep semantic similarity analysis rather than surface-level keyword matching.",
-    authorAr: "سارة الأحمد", authorEn: "Sara Al-Ahmad",
-    discAr: "هندسة معلوماتية", discEn: "Informatics Eng.", year: 2024,
-    sim: 18, approved: true, stars: 5,
-  },
-  {
-    img: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=600&q=75&fit=crop",
-    tags: [{ cls: "rt-a", ar: "أمن معلومات", en: "Cybersecurity" }],
-    titleAr: "اكتشاف التهديدات السيبرانية في الوقت الحقيقي باستخدام التعلم العميق",
-    titleEn: "Real-Time Cyber Threat Detection Using Deep Learning",
-    bodyAr: "نموذج هجين يجمع LSTM وشبكات الانتباه لتصنيف حركة الشبكة وكشف الاختراقات فورياً.",
-    bodyEn: "A hybrid LSTM + attention model for real-time network traffic classification and intrusion detection.",
-    authorAr: "محمد العلي", authorEn: "Mohammad Al-Ali",
-    discAr: "أمن معلومات", discEn: "Cybersecurity", year: 2024,
-    sim: 22, approved: true, stars: 4,
-  },
-  {
-    img: "https://images.unsplash.com/photo-1501504905252-473c47e087f8?w=600&q=75&fit=crop",
-    tags: [{ cls: "rt-t", ar: "تعليم إلكتروني", en: "E-Learning" }],
-    titleAr: "منصة تعليمية تفاعلية مدعومة بالذكاء الاصطناعي للتعلم الشخصي",
-    titleEn: "AI-Powered Interactive Platform for Personalised Learning",
-    bodyAr: "نظام توصية يكيّف المحتوى التعليمي حسب مستوى الطالب وأسلوب تعلمه المُستنتج تلقائياً.",
-    bodyEn: "A recommendation system adapting educational content based on inferred student level and learning style.",
-    authorAr: "لمى البكري", authorEn: "Lama Al-Bakri",
-    discAr: "تطوير تطبيقات", discEn: "App Dev.", year: 2024,
-    sim: 34, approved: false, stars: 4,
-  },
-  {
-    img: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=75&fit=crop",
-    tags: [{ cls: "rt-b", ar: "شبكات", en: "Networks" }],
-    titleAr: "تحسين أداء شبكات 5G في البيئات المزدحمة باستخدام خوارزميات تكيفية",
-    titleEn: "5G Performance Optimisation in Dense Environments via Adaptive Algorithms",
-    bodyAr: "محاكاة وتحليل لتقنيات تخصيص الطيف الديناميكي في شبكات الجيل الخامس.",
-    bodyEn: "Simulation and analysis of dynamic spectrum allocation for fifth-generation networks.",
-    authorAr: "أحمد سالم", authorEn: "Ahmad Salem",
-    discAr: "شبكات", discEn: "Networks", year: 2024,
-    sim: 15, approved: true, stars: 4,
-  },
-  {
-    img: "https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=600&q=75&fit=crop",
-    tags: [{ cls: "rt-a", ar: "علم البيانات", en: "Data Science" }],
-    titleAr: "تحليل مشاعر التغريدات العربية باستخدام نماذج المحولات",
-    titleEn: "Arabic Tweet Sentiment Analysis Using Transformer Models",
-    bodyAr: "دراسة مقارنة لأداء CAMeLBERT وAraBERT في تصنيف المشاعر على مجموعة بيانات سورية.",
-    bodyEn: "A comparative study of CAMeLBERT vs AraBERT on Syrian dialect sentiment classification.",
-    authorAr: "نور الحسن", authorEn: "Nour Al-Hassan",
-    discAr: "علم البيانات", discEn: "Data Science", year: 2024,
-    sim: 20, approved: true, stars: 5,
-  },
-];
-
-// ══ SCROLL HIJACK ══
-function ScrollHijack({ isAr, t }) {
-  const wrapRef  = useRef(null);
-  const stripRef = useRef(null);
-  const [idx, setIdx]     = useState(0);
-  const [pct, setPct]     = useState(0);
-  const N      = CARDS.length;
-  const offRef = useRef(0);
-  const tgtRef = useRef(0);
-  const rafRef = useRef(null);
-
-  const updateSizes = useCallback(() => {
-    const wrapper = wrapRef.current;
-    const strip   = stripRef.current;
-    if (!wrapper || !strip) return;
-    const vh = window.innerHeight;
-    wrapper.style.height = `${vh * N}px`;
-    const track = strip.parentElement;
-    if (!track) return;
-    const w = track.offsetWidth;
-    strip.style.width = `${N * w}px`;
-    strip.querySelectorAll(".aspu-sh-slide").forEach((s) => {
-      s.style.width = `${w}px`;
-    });
-  }, [N]);
-
-  useEffect(() => {
-    updateSizes();
-    window.addEventListener("resize", updateSizes);
-
-    const tick = () => {
-      const wrapper = wrapRef.current;
-      const strip   = stripRef.current;
-      if (!wrapper || !strip) {
-        rafRef.current = requestAnimationFrame(tick);
-        return;
-      }
-      const rect     = wrapper.getBoundingClientRect();
-      const scrolled = Math.max(0, -rect.top);
-      const maxScroll = window.innerHeight * (N - 1);
-      const clamped   = Math.min(maxScroll, scrolled);
-      const trackW   = strip.parentElement?.offsetWidth || window.innerWidth;
-      const progress = maxScroll > 0 ? clamped / maxScroll : 0;
-      tgtRef.current = progress * trackW * (N - 1);
-      offRef.current += (tgtRef.current - offRef.current) * 0.12;
-      strip.style.transform = `translateX(${-offRef.current}px)`;
-      const newIdx = Math.min(N - 1, Math.round(progress * (N - 1)));
-      setIdx(newIdx);
-      setPct(Math.min(100, progress * 100));
-      rafRef.current = requestAnimationFrame(tick);
-    };
-
-    rafRef.current = requestAnimationFrame(tick);
-
-    return () => {
-      window.removeEventListener("resize", updateSizes);
-      cancelAnimationFrame(rafRef.current);
-    };
-  }, [N, updateSizes]);
-
-  const tr = t("research", { returnObjects: true });
-
-  return (
-    <div ref={wrapRef} className="aspu-sh-wrapper">
-      <div className="aspu-sh-sticky">
-        <div className="aspu-sh-header">
-          <div>
-            <div className="aspu-sh-ey">{tr.eyebrow}</div>
-            <h2 className="aspu-sh-h2">{tr.title}</h2>
-          </div>
-          <div className="aspu-sh-meta">
-            <span className="aspu-sh-counter">{idx + 1} / {N}</span>
-            <div className="aspu-sh-dots">
-              {Array.from({ length: N }).map((_, i) => (
-                <div key={i} className={`aspu-sh-dot${i === idx ? " on" : ""}`} />
-              ))}
-            </div>
-            <div className="aspu-sh-pbar">
-              <div className="aspu-sh-pfill" style={{ width: pct + "%" }} />
-            </div>
-          </div>
-        </div>
-
-        <div className="aspu-sh-track">
-          <div ref={stripRef} className="aspu-sh-strip" dir="ltr">
-            {CARDS.map((card, i) => (
-              <div key={i} className="aspu-sh-slide">
-                <ResearchCard card={card} isAr={isAr} tr={tr} />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="aspu-sh-foot">
-          <p className="aspu-sh-hint">{tr.scrollHint}</p>
-          <button className="aspu-btn-gold sm">
-            {tr.viewAll} <span className="arr">→</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ══ RESEARCH CARD ══
 function ResearchCard({ card, isAr, tr }) {
   const ok = card.approved;
@@ -487,8 +327,10 @@ function ResearchCard({ card, isAr, tr }) {
         <div className="aspu-int-w">
           <span className="aspu-int-lbl">{tr.simLabel}</span>
           <div className="aspu-int-tr">
-            <div className={`aspu-int-f ${ok ? "if-ok" : "if-wn"}`}
-              style={{ width: card.sim + "%" }} />
+            <div
+              className={`aspu-int-f ${ok ? "if-ok" : "if-wn"}`}
+              style={{ width: card.sim + "%" }}
+            />
           </div>
           <span className={`aspu-int-pct ${ok ? "ip-ok" : "ip-wn"}`}>{card.sim}%</span>
           <span className={`aspu-r-badge ${ok ? "b-ok" : "b-pd"}`}>
@@ -503,19 +345,140 @@ function ResearchCard({ card, isAr, tr }) {
   );
 }
 
+// ══ SCROLL HIJACK — منطق مطابق 100% للـ HTML الشغال ══
+function ScrollHijack({ isAr, t }) {
+  const wrapRef  = useRef(null);
+  const stripRef = useRef(null);
+
+  const N   = RESEARCH_CARDS.length;
+  const SPC = 420;               // مسافة سكرول ثابتة per card — نفس الـ HTML
+  const TOT = SPC * (N - 1);    // إجمالي مسافة السكرول
+
+  const [idx, setIdx] = useState(0);
+  const [pct, setPct] = useState(0);
+
+  useEffect(() => {
+    const wrapper = wrapRef.current;
+    const strip   = stripRef.current;
+    if (!wrapper || !strip) return;
+
+    // ← نفس الـ HTML: height = 100vh + TOT (مش 100vh × N)
+    wrapper.style.height = `calc(100vh + ${TOT}px)`;
+
+    function setSizes() {
+      const w = strip.parentElement.offsetWidth;
+      strip.style.width = `${N * w}px`;
+      strip.querySelectorAll(".aspu-sh-slide").forEach((s) => {
+        s.style.width = w + "px";
+      });
+    }
+
+    setSizes();
+    window.addEventListener("resize", setSizes);
+
+    let off = 0;
+    let rafId;
+
+    function tick() {
+      const rect     = wrapper.getBoundingClientRect();
+      const scrolled = Math.max(0, -rect.top);
+      const clamped  = Math.min(TOT, scrolled);
+      const trackW   = strip.parentElement.offsetWidth;
+
+      // ← نفس الـ HTML: target = (clamped / SPC) * trackW
+      const target = (clamped / SPC) * trackW;
+
+      // lerp ناعم
+      off += (target - off) * 0.1;
+
+      // ← RTL/LTR awareness — نفس الـ HTML
+      const isRtl = document.documentElement.getAttribute("dir") === "rtl";
+      strip.style.transform = `translateX(${(isRtl ? 1 : -1) * off}px)`;
+
+      const cf     = clamped / SPC;
+      const newIdx = Math.min(N - 1, Math.round(cf));
+      const newPct = Math.min(1, N > 1 ? cf / (N - 1) : 0) * 100;
+
+      setIdx(newIdx);
+      setPct(newPct);
+
+      rafId = requestAnimationFrame(tick);
+    }
+
+    rafId = requestAnimationFrame(tick);
+
+    return () => {
+      window.removeEventListener("resize", setSizes);
+      cancelAnimationFrame(rafId);
+    };
+  }, [N, TOT]);
+
+  const tr = t("research", { returnObjects: true });
+
+  return (
+    <div ref={wrapRef} className="aspu-sh-wrapper">
+      <div className="aspu-sh-sticky">
+
+        {/* Header */}
+        <div className="aspu-sh-header">
+          <div>
+            <div className="aspu-sh-ey">{tr.eyebrow}</div>
+            <h2 className="aspu-sh-h2">{tr.title}</h2>
+          </div>
+          <div className="aspu-sh-meta">
+            <span className="aspu-sh-counter">{idx + 1} / {N}</span>
+            <div className="aspu-sh-dots">
+              {Array.from({ length: N }).map((_, i) => (
+                <div key={i} className={`aspu-sh-dot${i === idx ? " on" : ""}`} />
+              ))}
+            </div>
+            <div className="aspu-sh-pbar">
+              <div className="aspu-sh-pfill" style={{ width: pct + "%" }} />
+            </div>
+          </div>
+        </div>
+
+        {/* Track + Strip */}
+        <div className="aspu-sh-track">
+          {/* لا dir="ltr" — الـ translateX يتحكم بالاتجاه مباشرة */}
+          <div ref={stripRef} className="aspu-sh-strip">
+            {RESEARCH_CARDS.map((card, i) => (
+              <div key={i} className="aspu-sh-slide">
+                <ResearchCard card={card} isAr={isAr} tr={tr} />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="aspu-sh-foot">
+          <p className="aspu-sh-hint">{tr.scrollHint}</p>
+          <button
+            className="aspu-btn-gold sm"
+            onClick={() => { window.location.href = "/research_review"; }}
+          >
+            {tr.viewAll} <span className="arr">→</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
 // ══ MAIN COMPONENT ══
 export default function ASPUInsight() {
-  const [theme, setThemeState]   = useState("light");
-  const [lang,  setLangState]    = useState("ar");
-  const [menuOpen, setMenuOpen]  = useState(false);
-  const [scrolled, setScrolled]  = useState(false);
+  const [theme, setThemeState]        = useState("light");
+  const [lang,  setLangState]         = useState("ar");
+  const [menuOpen, setMenuOpen]       = useState(false);
+  const [scrolled, setScrolled]       = useState(false);
   const [hoveredMenu, setHoveredMenu] = useState(null);
   const [rotateIdx, setRotateIdx]     = useState(0);
   const [rotateVisible, setRotateVisible] = useState(true);
 
   const { t, i18n: i18nInst } = useTranslation();
   const cursorRef = useRef(null);
-  const isAr  = lang === "ar";
+  const isAr = lang === "ar";
 
   const setTheme = useCallback((th) => {
     setThemeState(th);
@@ -569,8 +532,10 @@ export default function ASPUInsight() {
     window.addEventListener("mousemove", onMove, { passive: true });
     let raf;
     const loop = () => {
-      cx += (mx - cx) * 0.1; cy += (my - cy) * 0.1;
-      el.style.left = cx + "px"; el.style.top = cy + "px";
+      cx += (mx - cx) * 0.1;
+      cy += (my - cy) * 0.1;
+      el.style.left = cx + "px";
+      el.style.top  = cy + "px";
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
@@ -594,20 +559,6 @@ export default function ASPUInsight() {
   const menuT    = t("menu",     { returnObjects: true });
   const navT     = t("nav",      { returnObjects: true });
 
-  const MENU_ITEMS = [
-    { key: "home",        num: "01" },
-    { key: "research",    num: "02" },
-    { key: "researchers", num: "03" },
-    { key: "integrity",   num: "04" },
-    { key: "contact",     num: "05" },
-  ];
-
-  const galleryImages = [
-    { src: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=600&q=80&fit=crop&crop=faces", tall: true },
-    { src: "https://images.unsplash.com/photo-1532094349884-543bc11b234d?w=500&q=80&fit=crop", tall: false },
-    { src: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=500&q=80&fit=crop", tall: false },
-  ];
-
   return (
     <div
       className={`aspu-root${menuOpen ? " menu-is-open" : ""}`}
@@ -620,116 +571,17 @@ export default function ASPUInsight() {
       {/* Cursor glow */}
       <div ref={cursorRef} className="aspu-cursor-glow" />
 
-      {/* ══ FULLSCREEN MENU ══ */}
-      <div className={`aspu-menu${menuOpen ? " open" : ""}`}>
-        <div className={`aspu-menu-top${menuOpen ? " visible" : ""}`}>
-          <div className="aspu-menu-logo-row">
-            <Logo size={36} />
-            <div>
-              <div className="aspu-menu-ln">ASPU Insight</div>
-              <div className="aspu-menu-ls">
-                {isAr ? "المجلة الأكاديمية الرقمية" : "Digital Academic Journal"}
-              </div>
-            </div>
-          </div>
-          <button className="aspu-menu-close-btn" onClick={() => setMenuOpen(false)}>
-            {navT.close}
-            <svg width="12" height="12" viewBox="0 0 14 14" fill="none">
-              <path d="M1 1l12 12M13 1L1 13" stroke="currentColor"
-                strokeWidth="1.8" strokeLinecap="round" />
-            </svg>
-          </button>
-        </div>
-
-        <div className="aspu-menu-body">
-          <div className={`aspu-menu-links${hoveredMenu !== null ? " has-hover" : ""}`}>
-            {MENU_ITEMS.map((item, i) => (
-              <div key={item.key} className="aspu-ml-wrap">
-                <a
-                  className={[
-                    "aspu-menu-link",
-                    menuOpen             ? "entering" : "",
-                    hoveredMenu === i    ? "hov"      : "",
-                    hoveredMenu !== null && hoveredMenu !== i ? "dim" : "",
-                  ].filter(Boolean).join(" ")}
-                  style={{ transitionDelay: menuOpen ? `${i * 0.07}s` : "0s" }}
-                  href="#"
-                  onMouseEnter={() => setHoveredMenu(i)}
-                  onMouseLeave={() => setHoveredMenu(null)}
-                  onClick={() => setMenuOpen(false)}
-                >
-                  <div className="aspu-ml-row">
-                    <span className="aspu-ml-name">{menuT[item.key]}</span>
-                    <span className="aspu-ml-num">{item.num}</span>
-                  </div>
-                  <span className="aspu-ml-sub">{menuT.explore}</span>
-                </a>
-              </div>
-            ))}
-          </div>
-
-          {/* Preview panel */}
-          <div className="aspu-menu-preview">
-            <div className={`aspu-preview-inner${hoveredMenu !== null ? " show" : ""}`}>
-              <div className="aspu-preview-ring">
-                <div className="aspu-preview-ring-spin" />
-                <Logo size={52} />
-              </div>
-              <div className="aspu-preview-divider" />
-              <div className="aspu-preview-name">
-                {hoveredMenu !== null ? menuT[MENU_ITEMS[hoveredMenu].key] : "ASPU"}
-              </div>
-              <div className="aspu-preview-tag">ASPU Insight</div>
-            </div>
-          </div>
-        </div>
-
-        <div className={`aspu-menu-foot${menuOpen ? " visible" : ""}`}>
-          <span className="aspu-mf-label">{menuT.appearance}</span>
-          <div className="aspu-menu-tpill">
-            <button className={`aspu-mtp-btn${theme === "dark" ? " on" : ""}`}
-              onClick={() => setTheme("dark")}>🌙</button>
-            <button className={`aspu-mtp-btn${theme === "light" ? " on" : ""}`}
-              onClick={() => setTheme("light")}>☀️</button>
-          </div>
-          <div className="aspu-menu-tpill">
-            <button className={`aspu-mtp-btn${lang === "ar" ? " on" : ""}`}
-              onClick={() => setLang("ar")}>ع</button>
-            <button className={`aspu-mtp-btn${lang === "en" ? " on" : ""}`}
-              onClick={() => setLang("en")}>EN</button>
-          </div>
-
-          {/* ══ LOGIN BUTTON → /Auth ══ */}
-          <a href="/Auth" className="aspu-menu-login-btn">
-            {menuT.login}
-          </a>
-        </div>
-      </div>
-
-      {/* ══ NAVBAR ══ */}
-      <nav className={`aspu-nav${scrolled ? " scrolled" : ""}`}>
-        <a href="#" className="aspu-nav-logo">
-          <Logo size={38} />
-          <div>
-            <div className="aspu-logo-n">ASPU Insight</div>
-            <div className="aspu-logo-s">
-              {isAr ? "المجلة الأكاديمية" : "Academic Journal"}
-            </div>
-          </div>
-        </a>
-        <div className="aspu-nav-space" />
-        <button
-          className={`aspu-nav-menu-btn${menuOpen ? " is-open" : ""}`}
-          onClick={() => setMenuOpen(true)}
-        >
-          <span className="aspu-nmb-label">{navT.menu}</span>
-          <div className="aspu-nmb-lines">
-            <div className="aspu-nmb-line l1" />
-            <div className="aspu-nmb-line l2" />
-            <div className="aspu-nmb-line l3" />
-          </div>
-        </button>
-      </nav>
+      {/* ══ NAVBAR (nav + fullscreen menu) ══ */}
+      <Navbar
+        menuOpen={menuOpen} setMenuOpen={setMenuOpen}
+        theme={theme} setTheme={setTheme}
+        lang={lang} setLang={setLang}
+        hoveredMenu={hoveredMenu} setHoveredMenu={setHoveredMenu}
+        scrolled={scrolled}
+        isAr={isAr}
+        menuT={menuT} navT={navT}
+        Logo={Logo}
+      />
 
       {/* ══ HERO ══ */}
       <section className="aspu-hero">
@@ -833,7 +685,7 @@ export default function ASPUInsight() {
             </button>
           </div>
           <div className="aspu-gallery-grid">
-            {galleryImages.map((img, i) => (
+            {GALLERY_IMAGES.map((img, i) => (
               <div key={i} className={`aspu-gallery-img${img.tall ? " tall" : ""}`}>
                 <img src={img.src} alt="" loading="lazy" />
                 <div className="aspu-gimg-badge">{gallery.badges[i]}</div>
@@ -865,36 +717,7 @@ export default function ASPUInsight() {
       </div>
 
       {/* ══ FOOTER ══ */}
-      <footer className="aspu-footer">
-        <div className="aspu-ft-grid">
-          <div className="aspu-ft-brand">
-            <div className="aspu-ft-brand-logo">
-              <Logo size={36} />
-              <div>
-                <div className="aspu-logo-n">ASPU Insight</div>
-                <div className="aspu-logo-s">
-                  {isAr ? "المجلة الأكاديمية الرقمية" : "Digital Academic Journal"}
-                </div>
-              </div>
-            </div>
-            <p>{footer.brand}</p>
-          </div>
-          {footer.cols.map((col, i) => (
-            <div key={i} className="aspu-ft-col">
-              <h5>{col.title}</h5>
-              <ul>
-                {col.links.map((link, j) => (
-                  <li key={j}><a href="#">{link}</a></li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-        <div className="aspu-ft-btm">
-          <span>{footer.copy}</span>
-          <span>{footer.sub}</span>
-        </div>
-      </footer>
+      <Footer isAr={isAr} footer={footer} Logo={Logo} />
     </div>
   );
 }
