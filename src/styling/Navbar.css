@@ -1,15 +1,3 @@
-/* ════════════════════════════════════════════════
-   NAVBAR.CSS
-   Styles for: Fullscreen Menu + Navbar
-   Relies on CSS variables defined in Home.css
-   (--bg, --tx, --ac, --bd, --tx2, --tx3, --tr, etc.)
-   Make sure Home.css (or the file defining :root /
-   [data-theme] tokens) is loaded on the page.
-════════════════════════════════════════════════ */
-
-/* ════════════════════════════════════════════════
-   FULLSCREEN MENU
-════════════════════════════════════════════════ */
 .aspu-menu {
   position: fixed;
   inset: 0;

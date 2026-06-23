@@ -1,3 +1,5 @@
+import { Ara, Eng } from '../i18n';
+import "../styling/Footer.css"
 export default function Footer({ isAr, footer, Logo }) {
   return (
     <footer className="aspu-footer">
@@ -8,8 +10,7 @@ export default function Footer({ isAr, footer, Logo }) {
             <div>
               <div className="aspu-logo-n">ASPU Insight</div>
               <div className="aspu-logo-s">
-                {isAr ? "المجلة الأكاديمية الرقمية" : "Digital Academic Journal"}
-              </div>
+                {(isAr ? Ara : Eng).shared.logoTagline}              </div>
             </div>
           </div>
           <p>{footer.brand}</p>

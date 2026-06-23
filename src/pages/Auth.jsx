@@ -3,22 +3,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { register as apiRegister, requestPasswordReset, verifyEmail } from "../api/auth";
 import "../styling/Auth.css";
-
-function Logo() {
-  return (
-    <svg style={{ width: 34, height: 34, flexShrink: 0 }} viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
-      <rect width="40" height="40" rx="8" fill="#E8E0D0"/>
-      <circle cx="20" cy="19" r="14" fill="none" stroke="#C4A55A" strokeWidth="0.6" opacity="0.5"/>
-      <path d="M14,22 Q14,14 20,12 Q26,14 26,22 Q26,28 20,29 Q14,28 14,22 Z" fill="#F5F0E8" stroke="#C4A55A" strokeWidth="0.9"/>
-      <line x1="20" y1="12" x2="20" y2="29" stroke="#C4A55A" strokeWidth="1"/>
-      <polygon points="20,13 16.5,20 23.5,20" fill="#C4A55A"/>
-      <line x1="16.4" y1="20" x2="13" y2="24" stroke="#5A8FA0" strokeWidth="1.2" strokeLinecap="round"/>
-      <line x1="20" y1="20" x2="20" y2="26" stroke="#C4A55A" strokeWidth="1.4" strokeLinecap="round"/>
-      <line x1="23.6" y1="20" x2="27" y2="24" stroke="#7A5A30" strokeWidth="1.2" strokeLinecap="round"/>
-      <circle cx="20" cy="13" r="1.5" fill="#B89040"/>
-    </svg>
-  );
-}
+import Logo from "../components/Logo";
+import { Ara, Eng } from "../i18n";
 
 const EyeOn  = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
 const EyeOff = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>;
@@ -46,6 +32,7 @@ export default function Auth() {
 
   const [lang, setLang]       = useState("ar");
   const isAr = lang === "ar";
+  const texts = isAr ? Ara : Eng;
 
   const [activeTab, setActiveTab] = useState("login");
 
@@ -96,8 +83,19 @@ export default function Auth() {
     setLoginError("");
     setLoginLoading(true);
     try {
-      await login(loginEmail, loginPw);
-      navigate(from, { replace: true });
+      const data = await login(loginEmail, loginPw);
+
+      if (data.requires_2fa === false) {
+        navigate("/setup-2fa", {
+          state: { lang, from },
+          replace: true,
+        });
+      } else {
+        navigate("/verify-otp", {
+          state: { lang, from },
+          replace: true,
+        });
+      }
     } catch (err) {
       const data = err.response?.data;
       const msg = data
@@ -165,8 +163,7 @@ export default function Auth() {
           <Logo />
           <div>
             <div className="tb-ln">ASPU Insight</div>
-            <div className="tb-ls ar">المجلة الأكاديمية</div>
-            <div className="tb-ls en">Academic Journal</div>
+            <div className="tb-ls">{texts.shared.secondaryLogoTagline}</div>
           </div>
         </a>
         <div className="tb-r">
@@ -422,8 +419,9 @@ export default function Auth() {
                 <div className="stitle en">Account Created!</div>
                 <p className="sdesc ar">تم إرسال رابط تأكيد إلى بريدك الإلكتروني. يرجى تأكيد بريدك قبل تسجيل الدخول.</p>
                 <p className="sdesc en">A confirmation link was sent to your email. Please verify before signing in.</p>
+                {/* ✅ التعديل هون: بدل navigate(from) صار يروح لتبويب تسجيل الدخول */}
                 <button className="btn" style={{ maxWidth: 260, marginTop: 6 }}
-                  onClick={() => navigate(from, { replace: true })}>
+                  onClick={() => { setRegSuccess(false); switchTab("login"); }}>
                   <span className="ar">الذهاب لتسجيل الدخول</span>
                   <span className="en">Go to Login</span>
                   <span className="barr">→</span>

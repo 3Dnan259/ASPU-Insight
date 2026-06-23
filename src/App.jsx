@@ -5,6 +5,8 @@ import ResearchReview from './pages/ResearchReview';
 import StudentProfile from './pages/Profile';
 import Home from './pages/Home';
 import Auth from './pages/Auth';
+import SetupTwoFA from "./pages/SetupTwoFA";
+import VerifyOTP from "./pages/VerifyOTP";
 
 function App() {
   return (
@@ -14,6 +16,8 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/research_review" element={<ResearchReview />} />
+          <Route path="/setup-2fa" element={<SetupTwoFA />} />
+          <Route path="/verify-otp" element={<VerifyOTP />} />
           <Route
             path="/Profile"
             element={

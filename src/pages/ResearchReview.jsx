@@ -1,11 +1,3 @@
-/**
- * ASPU Insight — Research Review Page
- * React + Tailwind + Custom CSS
- *
- * الداتا مفصولة في ملف ResearchReview.js
- * لما تبدل الـ API، غير أسماء المتغيرات من api* للـ response بتاعتك
- */
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
   apiReaderPeople,
@@ -14,10 +6,12 @@ import {
   apiPubMeta,
   apiPageStats,
   apiFilterCounts,
-} from "../MokData/Research_review";
+}from "../MokData/Research_review";
 import "../styling/ResearchReview.css";
 import Navbar from "../components/Navbar"
 import Footer from "../components/Footer"
+import Logo from "../components/Logo"
+import { Ara, Eng } from '../i18n';
 // ─── Mapping from API data to component state ─────────────────────────────────
 // لما تبدل بالـ API، بس غير المتغيرات هون
 const READER_PEOPLE = apiReaderPeople;
@@ -28,23 +22,6 @@ const PAGE_STATS = apiPageStats;
 const FILTER_COUNTS = apiFilterCounts;
 // ─────────────────────────────────────────────────────────────────────────────
 
-
-// ─── SVG Logo ───────────────────────────────────────────────────────────────
-function Logo({ size = 38 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0, display: "block" }}>
-      <rect width="40" height="40" rx="8" fill="#0D0F12" />
-      <circle cx="20" cy="19" r="14" fill="none" stroke="#C4A55A" strokeWidth="0.6" opacity="0.5" />
-      <path d="M14,22 Q14,14 20,12 Q26,14 26,22 Q26,28 20,29 Q14,28 14,22 Z" fill="#141820" stroke="#C4A55A" strokeWidth="0.9" />
-      <line x1="20" y1="12" x2="20" y2="29" stroke="#C4A55A" strokeWidth="1" />
-      <polygon points="20,13 16.5,20 23.5,20" fill="#C4A55A" />
-      <line x1="16.4" y1="20" x2="13" y2="24" stroke="#5A8FA0" strokeWidth="1.2" strokeLinecap="round" />
-      <line x1="20" y1="20" x2="20" y2="26" stroke="#C4A55A" strokeWidth="1.4" strokeLinecap="round" />
-      <line x1="23.6" y1="20" x2="27" y2="24" stroke="#7A5A30" strokeWidth="1.2" strokeLinecap="round" />
-      <circle cx="20" cy="13" r="1.5" fill="#E8D090" />
-    </svg>
-  );
-}
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 function stars(n) {

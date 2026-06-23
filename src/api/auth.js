@@ -32,6 +32,7 @@ export const getProfile = async () => {
   return data;
 };
 
+//خالص
 export const updateProfile = async (payload) => {
   const { data } = await api.patch('/api/auth/ASPU-2004/profile/', payload);
   return data;
@@ -73,4 +74,15 @@ export const getCurrentUser = () => {
   } catch {
     return null;
   }
+};
+
+export const enable2FA = async () => {
+  const { data } = await api.post('/api/auth/ASPU-2004/2fa/enable/');
+  return data; // { secret, qr_code_url, message }
+};
+
+//خالص
+export const confirm2FA = async (otp_code) => {
+  const { data } = await api.post('/api/auth/ASPU-2004/2fa/confirm/', { otp_code });
+  return data;
 };

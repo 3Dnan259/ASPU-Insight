@@ -1,6 +1,7 @@
 import '../styling/Navbar.css'; 
 import { isAuthenticated, logout } from '../api/auth'; 
 import { useNavigate } from 'react-router-dom'; 
+import { Ara, Eng } from '../i18n';
 
 // ══ MENU ITEMS — ثابتة لكل صفحات الموقع، هون مكانها الصح ══
 const MENU_ITEMS = [
@@ -9,7 +10,7 @@ const MENU_ITEMS = [
   { key: "researchers", num: "03", href: "#" },
   { key: "integrity",   num: "04", href: "#" },
   { key: "contact",     num: "05", href: "#" },
-  { key: "Profile",     num: "06", href: "/Profile" },
+  { key: "profile",     num: "06", href: "/Profile" },
 ];
 
 export default function Navbar({ 
@@ -29,6 +30,7 @@ export default function Navbar({
 }) { 
   const loggedIn = isAuthenticated(); 
   const navigate = useNavigate(); 
+  const visibleMenuItems = loggedIn ? MENU_ITEMS : MENU_ITEMS.filter(item => item.key !== "Profile");
 
   const handleLogout = async () => { 
     await logout(); 
@@ -45,7 +47,7 @@ export default function Navbar({
             <div> 
               <div className="aspu-menu-ln">ASPU Insight</div> 
               <div className="aspu-menu-ls"> 
-                {isAr ? "المجلة الأكاديمية الرقمية" : "Digital Academic Journal"} 
+                {(isAr ? Ara : Eng).shared.logoTagline} 
               </div> 
             </div> 
           </div> 
@@ -59,7 +61,7 @@ export default function Navbar({
 
         <div className="aspu-menu-body"> 
           <div className={`aspu-menu-links${hoveredMenu !== null ? " has-hover" : ""}`}> 
-            {MENU_ITEMS.map((item, i) => ( 
+            {visibleMenuItems.map((item, i) => ( 
               <div key={item.key} className="aspu-ml-wrap"> 
                 <a 
                   className={[ 
@@ -91,7 +93,7 @@ export default function Navbar({
               </div> 
               <div className="aspu-preview-divider" /> 
               <div className="aspu-preview-name"> 
-                {hoveredMenu !== null ? menuT[MENU_ITEMS[hoveredMenu].key] : "ASPU"} 
+                {hoveredMenu !== null ? menuT[visibleMenuItems[hoveredMenu].key] : "ASPU"} 
               </div> 
               <div className="aspu-preview-tag">ASPU Insight</div> 
             </div> 
@@ -126,7 +128,7 @@ export default function Navbar({
           <div> 
             <div className="aspu-logo-n">ASPU Insight</div> 
             <div className="aspu-logo-s"> 
-              {isAr ? "المجلة الأكاديمية" : "Academic Journal"} 
+              {(isAr ? Ara : Eng).shared.secondaryLogoTagline} 
             </div> 
           </div> 
         </a> 

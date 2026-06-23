@@ -1,198 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation, initReactI18next } from "react-i18next";
 import i18n from "i18next";
+import { resources } from "../i18n";
 import '../styling/Home.css'
 import { RESEARCH_CARDS, GALLERY_IMAGES } from '../MokData/Data.js';
 import Navbar from '../components/Navbar.jsx';
 import Footer from '../components/Footer.jsx'
-
-// ══ i18n INIT ══
-const resources = {
-  ar: {
-    translation: {
-      nav: { menu: "القائمة", close: "إغلاق" },
-      menu: {
-        home: "الرئيسية", research: "الأبحاث", researchers: "الباحثون",
-        integrity: "النزاهة", contact: "تواصل معنا",
-        explore: "استعرض", appearance: "المظهر", login: "تسجيل الدخول →",
-      },
-      hero: {
-        badge: "العدد الأول · 2025 · جامعة الشام الخاصة",
-        titleLine1: "المجلة الأكاديمية",
-        titleLine2: "الرقمية",
-        titleHighlight: "لأبحاث",
-        rotate: ["الطلبة", "العلوم", "المستقبل", "المعرفة"],
-        sub: "منصة رقمية أكاديمية تتيح نشر ومتابعة ومراجعة أبحاث الطلبة، مع نظام ذكاء اصطناعي متقدم للتحقق من الأصالة العلمية.",
-        cta1: "استعرض الأبحاث", cta2: "قدّم بحثك", scroll: "مرّر",
-        watermark: "بصيرة",
-      },
-      stats: [
-        { n: 1240, s: "", l: "بحث منشور" },
-        { n: 380,  s: "", l: "طالب باحث" },
-        { n: 42,   s: "", l: "أستاذ محكّم" },
-        { n: 96,   s: "%", l: "نزاهة علمية" },
-        { n: 8,    s: "", l: "تخصصات" },
-      ],
-      search: {
-        eyebrow: "بحث في الأرشيف الأكاديمي",
-        placeholder: "ابحث عن موضوع، باحث، أو كلمة مفتاحية...",
-        btn: "بحث", trendLabel: "الأكثر بحثاً:",
-        chips: ["ذكاء اصطناعي", "تعلم الآلة", "أمن معلومات", "تطبيقات الويب"],
-      },
-      sections: [
-        {
-          num: "01", label: "رسالتنا",
-          lines: ["المعرفة التي", "لا تُشارَك", "تبقى ناقصة."],
-          accent: 1,
-          body: "منصة رقمية أكاديمية تجمع أبحاث ومشاريع طلبة كلية الهندسة المعلوماتية — مكان واحد لكل ما ينتجه العقل الأكاديمي في جامعة الشام الخاصة.",
-        },
-        {
-          num: "02", label: "الهدف",
-          lines: ["بحثٌ واحد", "يُغيّر", "مساراً كاملاً."],
-          accent: 2,
-          body: "كل مشروع تخرج هو إضافة حقيقية للمعرفة الإنسانية. منصتنا تضمن أن لا يضيع أي جهد أكاديمي في الأدراج — بل يُرى، يُقرأ، ويُبنى عليه.",
-        },
-        {
-          num: "03", label: "النزاهة",
-          lines: ["النزاهة العلمية", "ليست", "خياراً."],
-          accent: 0,
-          body: "نظام ذكاء اصطناعي متقدم يحلل التشابه الدلالي لكل بحث، ويتحقق من المراجع، ويضمن أصالة كل عمل منشور على المنصة.",
-        },
-      ],
-      research: {
-        eyebrow: "أبرز الأبحاث", title: "الأبحاث المميزة هذا الفصل",
-        scrollHint: "↓ مرّر للأسفل للانتقال بين الأبحاث",
-        viewAll: "عرض الكل",
-        simLabel: "تشابه:", approved: "✓ معتمد", pending: "⏳ مراجعة",
-      },
-      gallery: {
-        eyebrow: "الطلبة والأبحاث",
-        title: "صُمِّمت للطالب\nقبل كل شيء",
-        desc: "منصة تجمع طلبة الهندسة المعلوماتية بأبحاثهم — من التقديم إلى النشر، كل خطوة واضحة ومنظمة.",
-        bullets: [
-          { icon: "✓", strong: "تقديم بحث بخطوات واضحة", text: "رفع الملف، البيانات، الإرسال." },
-          { icon: "✓", strong: "متابعة حالة البحث لحظياً", text: "من الانتظار إلى الاعتماد." },
-          { icon: "✓", strong: "تقرير النزاهة المرئي", text: "نتيجة الفحص بلمحة." },
-        ],
-        cta: "ابدأ الآن",
-        badges: ["طلبة جامعة الشام", "أبحاث متقدمة", "مشاريع التخرج"],
-      },
-      features: {
-        eyebrow: "مميزات المنصة", title: "منصة أكاديمية متكاملة",
-        items: [
-          { num: "01", icon: "🤖", h: "كشف التشابه بالذكاء الاصطناعي", d: "نماذج BERT العربية تحلل محتوى كل بحث دلالياً.", tag: "NLP · BERT ↗" },
-          { num: "02", icon: "🔄", h: "سير عمل المراجعة الأكاديمية", d: "من تقديم البحث إلى الموافقة — كل خطوة مرئية لكل الأطراف.", tag: "Multi-role ↗" },
-          { num: "03", icon: "🗂️", h: "أرشيف بحثي منظم", d: "جميع الأبحاث قابلة للبحث والتصفية حسب التخصص والسنة.", tag: "Full-text Search ↗" },
-          { num: "04", icon: "📎", h: "تدقيق المراجع IEEE", d: "نظام آلي يرصد أخطاء التوثيق قبل التسليم النهائي.", tag: "Auto-validate ↗" },
-          { num: "05", icon: "📊", h: "لوحة النزاهة العلمية", d: "إحصائيات شفافة عن معدلات التشابه ونسب القبول والرفض.", tag: "Analytics ↗" },
-          { num: "06", icon: "🌐", h: "ثنائي اللغة بالكامل", d: "واجهة كاملة بالعربية والإنجليزية مع دعم RTL احترافي.", tag: "AR · EN · RTL ↗" },
-        ],
-      },
-      footer: {
-        brand: "مجلة رقمية أكاديمية تسلط الضوء على أبحاث الطلبة وإنجازاتهم في جامعة الشام الخاصة.",
-        cols: [
-          { title: "الأبحاث", links: ["آخر الإضافات", "الأكثر تقييماً", "حسب التخصص", "الأرشيف"] },
-          { title: "للطلبة",  links: ["تقديم بحث", "إرشادات النشر", "فحص التشابه"] },
-          { title: "للأساتذة", links: ["لوحة المراجعة", "تقارير النزاهة", "إدارة اللجنة"] },
-        ],
-        copy: "© 2025 ASPU Insight — جامعة الشام الخاصة",
-        sub: "مشروع تخرج · 2025–2026",
-      },
-    },
-  },
-  en: {
-    translation: {
-      nav: { menu: "Menu", close: "Close" },
-      menu: {
-        home: "HOME", research: "RESEARCH", researchers: "RESEARCHERS",
-        integrity: "INTEGRITY", contact: "CONTACT",
-        explore: "EXPLORE", appearance: "Appearance", login: "Login →",
-      },
-      hero: {
-        badge: "Vol. 1 · 2025 · Al-Sham Private University",
-        titleLine1: "The Digital",
-        titleLine2: "Academic",
-        titleHighlight: "Journal for",
-        rotate: ["Research", "Science", "Innovation", "Excellence"],
-        sub: "A digital academic platform for publishing, tracking and peer-reviewing student research, with an advanced AI system for scientific originality verification.",
-        cta1: "Browse Research", cta2: "Submit Your Paper", scroll: "Scroll",
-        watermark: "Insight",
-      },
-      stats: [
-        { n: 1240, s: "", l: "Published" },
-        { n: 380,  s: "", l: "Researchers" },
-        { n: 42,   s: "", l: "Reviewers" },
-        { n: 96,   s: "%", l: "Integrity avg." },
-        { n: 8,    s: "", l: "Disciplines" },
-      ],
-      search: {
-        eyebrow: "Search the Academic Archive",
-        placeholder: "Search by topic, researcher, or keyword...",
-        btn: "Search", trendLabel: "Trending:",
-        chips: ["AI", "Machine Learning", "Cybersecurity", "Web Apps"],
-      },
-      sections: [
-        {
-          num: "01", label: "Our Mission",
-          lines: ["Knowledge that", "is not shared", "remains incomplete."],
-          accent: 1,
-          body: "A digital academic platform bringing together research and projects of the Informatics Engineering faculty — one place for everything the academic mind produces at Al-Sham Private University.",
-        },
-        {
-          num: "02", label: "The Goal",
-          lines: ["One paper", "can change", "everything."],
-          accent: 2,
-          body: "Every graduation project is a genuine contribution to human knowledge. Our platform ensures no academic effort is lost — it is seen, read, and built upon.",
-        },
-        {
-          num: "03", label: "Integrity",
-          lines: ["Scientific integrity", "is not", "optional."],
-          accent: 0,
-          body: "An advanced AI system analyzes semantic similarity for every paper, verifies references, and guarantees the originality of every published work.",
-        },
-      ],
-      research: {
-        eyebrow: "Featured Research", title: "This Semester's Highlights",
-        scrollHint: "↓ Scroll down to browse papers",
-        viewAll: "View All",
-        simLabel: "Sim.:", approved: "✓ Approved", pending: "⏳ Pending",
-      },
-      gallery: {
-        eyebrow: "Students & Research",
-        title: "Designed for\nthe Student First",
-        desc: "A platform connecting informatics students with their research — from submission to publication, every step clear and organised.",
-        bullets: [
-          { icon: "✓", strong: "Clear submission steps", text: "upload, metadata, submit." },
-          { icon: "✓", strong: "Real-time status tracking", text: "from pending to approved." },
-          { icon: "✓", strong: "Visual integrity report", text: "check result at a glance." },
-        ],
-        cta: "Get Started",
-        badges: ["ASPU Students", "Advanced Research", "Graduation Projects"],
-      },
-      features: {
-        eyebrow: "Platform Features", title: "A Complete Academic Platform",
-        items: [
-          { num: "01", icon: "🤖", h: "AI Similarity Detection", d: "Arabic BERT models semantically analyze every submitted paper.", tag: "NLP · BERT ↗" },
-          { num: "02", icon: "🔄", h: "Academic Review Workflow", d: "From submission to approval — every step visible to all parties.", tag: "Multi-role ↗" },
-          { num: "03", icon: "🗂️", h: "Organised Research Archive", d: "All research searchable and filterable by discipline and year.", tag: "Full-text Search ↗" },
-          { num: "04", icon: "📎", h: "IEEE Reference Validation", d: "An automated system flags referencing errors before final submission.", tag: "Auto-validate ↗" },
-          { num: "05", icon: "📊", h: "Integrity Dashboard", d: "Transparent statistics on similarity rates and approval ratios.", tag: "Analytics ↗" },
-          { num: "06", icon: "🌐", h: "Fully Bilingual", d: "Full Arabic and English interface with professional RTL support.", tag: "AR · EN · RTL ↗" },
-        ],
-      },
-      footer: {
-        brand: "A digital academic journal spotlighting student research at Al-Sham Private University.",
-        cols: [
-          { title: "Research", links: ["Latest", "Top Rated", "By Discipline", "Archive"] },
-          { title: "Students", links: ["Submit Paper", "Guidelines", "Similarity Check"] },
-          { title: "Faculty",  links: ["Review Panel", "Integrity Reports", "Committee"] },
-        ],
-        copy: "© 2025 ASPU Insight — Al-Sham Private University",
-        sub: "Graduation Project · 2025–2026",
-      },
-    },
-  },
-};
+import Logo from '../components/Logo.jsx'
 
 if (!i18n.isInitialized) {
   i18n.use(initReactI18next).init({
@@ -202,23 +16,6 @@ if (!i18n.isInitialized) {
     interpolation: { escapeValue: false },
   });
 }
-
-// ══ SVG LOGO ══
-const Logo = ({ size = 38 }) => (
-  <svg width={size} height={size} viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"
-    style={{ flexShrink: 0, display: "block" }}>
-    <rect width="40" height="40" rx="8" fill="#0D0F12" />
-    <circle cx="20" cy="19" r="14" fill="none" stroke="#C4A55A" strokeWidth="0.6" opacity="0.5" />
-    <path d="M14,22 Q14,14 20,12 Q26,14 26,22 Q26,28 20,29 Q14,28 14,22 Z"
-      fill="#141820" stroke="#C4A55A" strokeWidth="0.9" />
-    <line x1="20" y1="12" x2="20" y2="29" stroke="#C4A55A" strokeWidth="1" />
-    <polygon points="20,13 16.5,20 23.5,20" fill="#C4A55A" />
-    <line x1="16.4" y1="20" x2="13" y2="24" stroke="#5A8FA0" strokeWidth="1.2" strokeLinecap="round" />
-    <line x1="20"   y1="20" x2="20"  y2="26" stroke="#C4A55A" strokeWidth="1.4" strokeLinecap="round" />
-    <line x1="23.6" y1="20" x2="27"  y2="24" stroke="#7A5A30" strokeWidth="1.2" strokeLinecap="round" />
-    <circle cx="20" cy="13" r="1.5" fill="#E8D090" />
-  </svg>
-);
 
 // ══ ANIMATED COUNTER ══
 function useCounter(target, suffix, inView) {
@@ -453,12 +250,12 @@ function ScrollHijack({ isAr, t }) {
         {/* Footer */}
         <div className="aspu-sh-foot">
           <p className="aspu-sh-hint">{tr.scrollHint}</p>
-          <button
+          <a
             className="aspu-btn-gold sm"
-            onClick={() => { window.location.href = "/research_review"; }}
+            href="/research_review"
           >
             {tr.viewAll} <span className="arr">→</span>
-          </button>
+          </a>
         </div>
 
       </div>
@@ -608,9 +405,9 @@ export default function ASPUInsight() {
           <p className="aspu-hero-sub">{h.sub}</p>
 
           <div className="aspu-hero-btns">
-            <button className="aspu-btn-gold">
+            <a className="aspu-btn-gold" href="/research_review">
               {h.cta1} <span className="arr">→</span>
-            </button>
+            </a>
             <button className="aspu-btn-outline">{h.cta2}</button>
           </div>
         </div>

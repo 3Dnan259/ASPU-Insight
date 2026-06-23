@@ -1,29 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import "../styling/Profile.css";
-import { getProfile } from "../api/auth";
+import { getProfile, updateProfile } from "../api/Auth";
 import Navbar from "../components/Navbar";
-import Footer from "../components/Footer"
-
-/* ══ SVG LOGO ══ */
-const Logo = ({ size = 38 }) => (
-    <svg
-        width={size}
-        height={size}
-        viewBox="0 0 40 40"
-        xmlns="http://www.w3.org/2000/svg"
-        style={{ flexShrink: 0, display: "block" }}
-    >
-        <rect width="40" height="40" rx="8" fill="#0D0F12" />
-        <circle cx="20" cy="19" r="14" fill="none" stroke="#C4A55A" strokeWidth="0.6" opacity="0.5" />
-        <path d="M14,22 Q14,14 20,12 Q26,14 26,22 Q26,28 20,29 Q14,28 14,22 Z" fill="#141820" stroke="#C4A55A" strokeWidth="0.9" />
-        <line x1="20" y1="12" x2="20" y2="29" stroke="#C4A55A" strokeWidth="1" />
-        <polygon points="20,13 16.5,20 23.5,20" fill="#C4A55A" />
-        <line x1="16.4" y1="20" x2="13" y2="24" stroke="#5A8FA0" strokeWidth="1.2" strokeLinecap="round" />
-        <line x1="20" y1="20" x2="20" y2="26" stroke="#C4A55A" strokeWidth="1.4" strokeLinecap="round" />
-        <line x1="23.6" y1="20" x2="27" y2="24" stroke="#7A5A30" strokeWidth="1.2" strokeLinecap="round" />
-        <circle cx="20" cy="13" r="1.5" fill="#E8D090" />
-    </svg>
-);
+import Footer from "../components/Footer";
+import Logo from "../components/Logo";
+import { Ara, Eng } from "../i18n";
 
 /* ══ ACTIVITY GRID ══ */
 function generateActivityGrid() {
@@ -65,12 +46,64 @@ function ProfileError({ message, onRetry, L }) {
             <div className="empty-state-ico">⚠️</div>
             <div className="empty-state-t">{L("حدث خطأ أثناء تحميل البروفايل", "Failed to load profile")}</div>
             <div className="empty-state-s">{message}</div>
-            <button
-                onClick={onRetry}
-                style={{ marginTop: 16, padding: "8px 20px", border: "1px solid var(--ac)", color: "var(--ac)", background: "transparent", borderRadius: 4, cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}
-            >
+            <button onClick={onRetry} style={{ marginTop: 16, padding: "8px 20px", border: "1px solid var(--ac)", color: "var(--ac)", background: "transparent", borderRadius: 4, cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>
                 {L("إعادة المحاولة", "Retry")}
             </button>
+        </div>
+    );
+}
+
+/* ══ INLINE EDIT FIELD ══ */
+function EditField({ label, value, onChange, type = "text", placeholder = "" }) {
+    return (
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
+            <label style={{ fontSize: 11, color: "var(--tx3)", fontWeight: 600, letterSpacing: "0.05em" }}>{label}</label>
+            {type === "textarea" ? (
+                <textarea
+                    value={value}
+                    onChange={e => onChange(e.target.value)}
+                    placeholder={placeholder}
+                    rows={3}
+                    style={{
+                        background: "var(--surf2)",
+                        border: "1px solid var(--bdr)",
+                        borderRadius: 8,
+                        padding: "10px 14px",
+                        color: "var(--tx1)",
+                        fontSize: 14,
+                        fontFamily: "inherit",
+                        resize: "vertical",
+                        outline: "none",
+                        transition: "border-color 0.2s",
+                        width: "100%",
+                        boxSizing: "border-box",
+                    }}
+                    onFocus={e => e.target.style.borderColor = "var(--ac)"}
+                    onBlur={e => e.target.style.borderColor = "var(--bdr)"}
+                />
+            ) : (
+                <input
+                    type={type}
+                    value={value}
+                    onChange={e => onChange(e.target.value)}
+                    placeholder={placeholder}
+                    style={{
+                        background: "var(--surf2)",
+                        border: "1px solid var(--bdr)",
+                        borderRadius: 8,
+                        padding: "10px 14px",
+                        color: "var(--tx1)",
+                        fontSize: 14,
+                        fontFamily: "inherit",
+                        outline: "none",
+                        transition: "border-color 0.2s",
+                        width: "100%",
+                        boxSizing: "border-box",
+                    }}
+                    onFocus={e => e.target.style.borderColor = "var(--ac)"}
+                    onBlur={e => e.target.style.borderColor = "var(--bdr)"}
+                />
+            )}
         </div>
     );
 }
@@ -91,6 +124,19 @@ export default function StudentProfile() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // ══ EDIT STATE ══
+    const [isEditing, setIsEditing] = useState(false);
+    const [saveLoading, setSaveLoading] = useState(false);
+    const [saveError, setSaveError] = useState("");
+    const [saveSuccess, setSaveSuccess] = useState(false);
+    const [editForm, setEditForm] = useState({
+        full_name: "",
+        institution: "",
+        orcid_id: "",
+        bio: "",
+        preferred_language: "ar",
+    });
+
     // ══ FETCH PROFILE ══
     const fetchProfile = async () => {
         setLoading(true);
@@ -105,9 +151,62 @@ export default function StudentProfile() {
         }
     };
 
-    useEffect(() => {
-        fetchProfile();
-    }, []);
+    useEffect(() => { fetchProfile(); }, []);
+
+    // ══ عند فتح وضع التعديل: احشي الفورم من البروفايل الحالي ══
+    const handleStartEdit = () => {
+        setEditForm({
+            full_name: profile.full_name || "",
+            institution: profile.institution || "",
+            orcid_id: profile.orcid_id || "",
+            bio: profile.bio || "",
+            preferred_language: profile.preferred_language || "ar",
+        });
+        setSaveError("");
+        setSaveSuccess(false);
+        setIsEditing(true);
+    };
+
+    // ══ إلغاء التعديل ══
+    const handleCancelEdit = () => {
+        setIsEditing(false);
+        setSaveError("");
+        setSaveSuccess(false);
+    };
+
+    // ══ حفظ التعديلات ══
+    const handleSave = async () => {
+        setSaveLoading(true);
+        setSaveError("");
+        setSaveSuccess(false);
+        try {
+            // بعث بس الحقول اللي تغيّرت
+            const changed = {};
+            Object.keys(editForm).forEach(key => {
+                if (editForm[key] !== (profile[key] || "")) {
+                    changed[key] = editForm[key];
+                }
+            });
+
+            if (Object.keys(changed).length === 0) {
+                setIsEditing(false);
+                return;
+            }
+
+            const updated = await updateProfile(changed);
+            setProfile(prev => ({ ...prev, ...updated }));
+            setSaveSuccess(true);
+            setTimeout(() => {
+                setIsEditing(false);
+                setSaveSuccess(false);
+            }, 1200);
+        } catch (err) {
+            const data = err?.response?.data;
+            setSaveError(data ? Object.values(data).flat().join(" ") : (L("فشل الحفظ. حاول مرة أخرى.", "Save failed. Please try again.")));
+        } finally {
+            setSaveLoading(false);
+        }
+    };
 
     // ══ SIDE EFFECTS ══
     useEffect(() => {
@@ -151,120 +250,39 @@ export default function StudentProfile() {
     const L = (ar, en) => (lang === "ar" ? ar : en);
     const isAr = lang === "ar";
 
-    // ══ Shared Navbar/Footer text — معرّفة محلياً (مش موحّدة بملف خارجي) ══
-    const navT = {
-        menu: L("القائمة", "Menu"),
-        close: L("إغلاق", "Close"),
-    };
-
-    const menuT = {
-        home: L("الرئيسية", "HOME"),
-        research: L("الأبحاث", "RESEARCH"),
-        researchers: L("الباحثون", "RESEARCHERS"),
-        integrity: L("النزاهة", "INTEGRITY"),
-        contact: L("تواصل معنا", "CONTACT"),
-        Profile: L("الملف الشخصي", "PROFILE"),
-        explore: L("استعرض", "EXPLORE"),
-        appearance: L("المظهر", "Appearance"),
-        login: L("تسجيل الدخول →", "Login →"),
-    };
-
-    const footer = {
-        brand: L(
-            "مجلة رقمية أكاديمية تسلط الضوء على أبحاث الطلبة وإنجازاتهم في جامعة الشام الخاصة.",
-            "A digital academic journal spotlighting student research at Al-Sham Private University."
-        ),
-        cols: isAr
-            ? [
-                  { title: "الأبحاث", links: ["آخر الإضافات", "الأكثر تقييماً", "حسب التخصص", "الأرشيف"] },
-                  { title: "للطلبة", links: ["تقديم بحث", "إرشادات النشر", "فحص التشابه"] },
-                  { title: "للأساتذة", links: ["لوحة المراجعة", "تقارير النزاهة", "إدارة اللجنة"] },
-              ]
-            : [
-                  { title: "Research", links: ["Latest", "Top Rated", "By Discipline", "Archive"] },
-                  { title: "Students", links: ["Submit Paper", "Guidelines", "Similarity Check"] },
-                  { title: "Faculty", links: ["Review Panel", "Integrity Reports", "Committee"] },
-              ],
-        copy: `© 2025 ASPU Insight — ${L("جامعة الشام الخاصة", "Al-Sham Private University")}`,
-        sub: L("مشروع تخرج · 2025–2026", "Graduation Project · 2025–2026"),
-    };
+    const texts = isAr ? Ara : Eng;
+    const navT = texts.nav;
+    const menuT = texts.menu;
+    const footer = texts.footer;
 
     // ══ MAP API → UI ══
     const student = profile ? {
-        nameAr: profile.full_name || profile.name || "",
-        nameEn: profile.full_name_en || profile.full_name || profile.name || "",
-        avatarInitial: (profile.full_name || profile.name || "؟")[0],
-        avatarUrl: profile.avatar || profile.profile_picture || null,
-        roleAr: profile.academic_level || "طالب",
-        roleEn: profile.academic_level_en || profile.academic_level || "Student",
-        facultyAr: profile.faculty || profile.college || "",
-        facultyEn: profile.faculty_en || profile.faculty || profile.college || "",
-        universityAr: profile.university || "جامعة ASPU",
-        universityEn: profile.university_en || profile.university || "ASPU University",
-        memberSinceAr: profile.date_joined ? `منتسب منذ ${new Date(profile.date_joined).getFullYear()}` : "",
-        memberSinceEn: profile.date_joined ? `Member since ${new Date(profile.date_joined).getFullYear()}` : "",
+        nameAr: profile.full_name || "",
+        nameEn: profile.full_name || "",
+        avatarInitial: (profile.full_name || "؟")[0].toUpperCase(),
+        avatarUrl: profile.profile_picture_url || null,
+        roleAr: profile.role === "محرر" ? "طالب" : profile.role,
+        roleEn: profile.role === "author" ? "Student" : profile.role,
+        universityAr: profile.institution || "جامعة الشام الخاصة",
+        universityEn: profile.institution || "ASPU University",
         email: profile.email || "",
+        bio: profile.bio || "",
+        institution: profile.institution || "",
+        orcid_id: profile.orcid_id || "",
     } : null;
 
     const stats = profile ? [
-        {
-            value: profile.publications_count ?? profile.research_count ?? "—",
-            labelAr: "بحث منشور",
-            labelEn: "Published",
-            deltaAr: profile.publications_this_year ? `${profile.publications_this_year} هذا العام` : null,
-            deltaEn: profile.publications_this_year ? `${profile.publications_this_year} this year` : null,
-        },
-        {
-            value: profile.total_reads?.toLocaleString() ?? "—",
-            labelAr: "مرة قُرئت الأبحاث",
-            labelEn: "Total Reads",
-            deltaAr: profile.reads_growth ? `+${profile.reads_growth}%` : null,
-            deltaEn: profile.reads_growth ? `+${profile.reads_growth}%` : null,
-        },
-        {
-            value: profile.citations_count ?? profile.citations ?? "—",
-            labelAr: "اقتباس علمي",
-            labelEn: "Citations",
-            deltaAr: null,
-            deltaEn: null,
-        },
-        {
-            value: profile.reputation_score ?? profile.score ?? "—",
-            labelAr: "نقطة تقييم",
-            labelEn: "Reputation Score",
-            deltaAr: profile.rank_label || null,
-            deltaEn: profile.rank_label_en || profile.rank_label || null,
-        },
+        { value: profile.publications_count ?? "—", labelAr: "بحث منشور", labelEn: "Published", deltaAr: null, deltaEn: null },
+        { value: profile.total_reads?.toLocaleString() ?? "—", labelAr: "مرة قُرئت الأبحاث", labelEn: "Total Reads", deltaAr: null, deltaEn: null },
+        { value: profile.citations_count ?? "—", labelAr: "اقتباس علمي", labelEn: "Citations", deltaAr: null, deltaEn: null },
+        { value: profile.reputation_score ?? "—", labelAr: "نقطة تقييم", labelEn: "Reputation Score", deltaAr: null, deltaEn: null },
     ] : [];
 
     const researchItems = profile?.research || profile?.publications || [];
-
-    const academicInfo = profile ? [
-        { labelAr: "المرحلة الدراسية", labelEn: "Academic Level", value: profile.academic_level || "—", accent: true },
-        { labelAr: "التخصص", labelEn: "Specialisation", value: profile.specialization || profile.major || "—", accent: false },
-        { labelAr: "الكلية", labelEn: "Faculty", value: profile.faculty || profile.college || "—", accent: false },
-        { labelAr: "المشرف الأكاديمي", labelEn: "Academic Supervisor", value: profile.supervisor || "—", accent: true },
-        { labelAr: "المعدل التراكمي", labelEn: "GPA", value: profile.gpa ? `${profile.gpa} / 4.00` : "—", accent: false },
-        { labelAr: "اللغات", labelEn: "Languages", value: profile.languages || "—", accent: false },
-    ] : [];
-
-    const level = profile?.level ? {
-        nameAr: profile.level.name_ar || profile.level.name || "",
-        nameEn: profile.level.name_en || profile.level.name || "",
-        badge: `LV. ${profile.level.number ?? ""}`,
-        currentPoints: profile.level.current_points ?? 0,
-        nextLevel: profile.level.next_level_points ?? 100,
-        progressPercent: profile.level.progress_percent ?? 0,
-        milestones: profile.level.milestones || [],
-    } : null;
-
+    const level = null;
     const skills = profile?.skills || profile?.research_areas || [];
-
     const socialLinks = profile ? [
         profile.email && { icon: "✉", label: profile.email, href: `mailto:${profile.email}` },
-        profile.researchgate && { icon: "🔬", label: "ResearchGate", href: profile.researchgate },
-        profile.google_scholar && { icon: "📚", label: "Google Scholar", href: profile.google_scholar },
-        profile.linkedin && { icon: "💼", label: "LinkedIn", href: profile.linkedin },
     ].filter(Boolean) : [];
 
     /* ── RENDER ── */
@@ -272,7 +290,6 @@ export default function StudentProfile() {
         <>
             <div className="cursor-glow" ref={cursorRef} />
 
-            {/* ══ NAVBAR (nav + fullscreen menu) ══ */}
             <Navbar
                 menuOpen={menuOpen} setMenuOpen={setMenuOpen}
                 theme={theme} setTheme={setTheme}
@@ -284,11 +301,9 @@ export default function StudentProfile() {
                 Logo={Logo}
             />
 
-            {/* ══ LOADING / ERROR ══ */}
             {loading && <ProfileSkeleton />}
             {!loading && error && <ProfileError message={error} onRetry={fetchProfile} L={L} />}
 
-            {/* ══ PROFILE CONTENT ══ */}
             {!loading && !error && profile && (
                 <>
                     {/* PROFILE HERO */}
@@ -297,9 +312,7 @@ export default function StudentProfile() {
                         <div className="hero-glow-2" />
                         <div className="hero-inner">
                             <div className="ph-breadcrumb">
-                                <a href="#">{L("الرئيسية", "Home")}</a>
-                                <span className="ph-sep">›</span>
-                                <a href="#">{L("الباحثون", "Researchers")}</a>
+                                <a href="/">{L("الرئيسية", "Home")}</a>
                                 <span className="ph-sep">›</span>
                                 <span>{L("بروفايل الطالب", "Student Profile")}</span>
                             </div>
@@ -317,29 +330,158 @@ export default function StudentProfile() {
                                     <div className="avatar-badge">🎓</div>
                                 </div>
 
-                                {/* Info */}
+                                {/* Info — عرض أو تعديل */}
                                 <div className="profile-info">
-                                    <div className="profile-role-tag">
-                                        <span>●</span>
-                                        <span>{L(student.roleAr, student.roleEn)}</span>
-                                    </div>
-                                    <div className="profile-name">{L(student.nameAr, student.nameEn)}</div>
-                                    <div className="profile-meta">
-                                        {student.facultyAr && <div className="profile-meta-item">🏛️ {L(student.facultyAr, student.facultyEn)}</div>}
-                                        {student.facultyAr && <div className="profile-meta-dot" />}
-                                        <div className="profile-meta-item">📍 {L(student.universityAr, student.universityEn)}</div>
-                                        {student.memberSinceAr && <><div className="profile-meta-dot" /><div className="profile-meta-item">📅 {L(student.memberSinceAr, student.memberSinceEn)}</div></>}
-                                    </div>
+                                    {isEditing ? (
+                                        /* ══ وضع التعديل ══ */
+                                        <div style={{ display: "flex", flexDirection: "column", gap: 0, minWidth: 280 }}>
+                                            <EditField
+                                                label={L("الاسم الكامل", "Full Name")}
+                                                value={editForm.full_name}
+                                                onChange={v => setEditForm(f => ({ ...f, full_name: v }))}
+                                                placeholder={L("أدخل اسمك الكامل", "Enter your full name")}
+                                            />
+                                            <EditField
+                                                label={L("المؤسسة / الجامعة", "Institution")}
+                                                value={editForm.institution}
+                                                onChange={v => setEditForm(f => ({ ...f, institution: v }))}
+                                                placeholder={L("جامعة الشام الخاصة", "Al-Sham Private University")}
+                                            />
+                                            <EditField
+                                                label="ORCID ID"
+                                                value={editForm.orcid_id}
+                                                onChange={v => setEditForm(f => ({ ...f, orcid_id: v }))}
+                                                placeholder="0000-0000-0000-0000"
+                                            />
+                                            <EditField
+                                                label={L("نبذة شخصية", "Bio")}
+                                                value={editForm.bio}
+                                                onChange={v => setEditForm(f => ({ ...f, bio: v }))}
+                                                type="textarea"
+                                                placeholder={L("اكتب نبذة مختصرة عنك...", "Write a short bio...")}
+                                            />
+
+                                            {/* اللغة المفضلة */}
+                                            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
+                                                <label style={{ fontSize: 11, color: "var(--tx3)", fontWeight: 600, letterSpacing: "0.05em" }}>
+                                                    {L("اللغة المفضلة", "Preferred Language")}
+                                                </label>
+                                                <div style={{ display: "flex", gap: 8 }}>
+                                                    {[{ val: "ar", label: "العربية" }, { val: "en", label: "English" }].map(opt => (
+                                                        <button
+                                                            key={opt.val}
+                                                            onClick={() => setEditForm(f => ({ ...f, preferred_language: opt.val }))}
+                                                            style={{
+                                                                padding: "7px 18px",
+                                                                borderRadius: 6,
+                                                                border: "1px solid",
+                                                                borderColor: editForm.preferred_language === opt.val ? "var(--ac)" : "var(--bdr)",
+                                                                background: editForm.preferred_language === opt.val ? "var(--ac)" : "transparent",
+                                                                color: editForm.preferred_language === opt.val ? "#fff" : "var(--tx2)",
+                                                                cursor: "pointer",
+                                                                fontSize: 13,
+                                                                fontFamily: "inherit",
+                                                                transition: "all 0.2s",
+                                                            }}
+                                                        >
+                                                            {opt.label}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* رسائل الخطأ / النجاح */}
+                                            {saveError && (
+                                                <div style={{ fontSize: 12, color: "#C0542A", marginBottom: 10, padding: "8px 12px", background: "rgba(192,84,42,0.08)", borderRadius: 6 }}>
+                                                    {saveError}
+                                                </div>
+                                            )}
+                                            {saveSuccess && (
+                                                <div style={{ fontSize: 12, color: "#2A8A5A", marginBottom: 10, padding: "8px 12px", background: "rgba(42,138,90,0.08)", borderRadius: 6 }}>
+                                                    {L("✓ تم الحفظ بنجاح", "✓ Saved successfully")}
+                                                </div>
+                                            )}
+
+                                            {/* أزرار الحفظ والإلغاء */}
+                                            <div style={{ display: "flex", gap: 10 }}>
+                                                <button
+                                                    onClick={handleSave}
+                                                    disabled={saveLoading}
+                                                    style={{
+                                                        padding: "9px 22px",
+                                                        background: "var(--ac)",
+                                                        color: "#fff",
+                                                        border: "none",
+                                                        borderRadius: 8,
+                                                        cursor: saveLoading ? "not-allowed" : "pointer",
+                                                        fontSize: 13,
+                                                        fontFamily: "inherit",
+                                                        fontWeight: 600,
+                                                        opacity: saveLoading ? 0.7 : 1,
+                                                        transition: "opacity 0.2s",
+                                                    }}
+                                                >
+                                                    {saveLoading ? L("جارٍ الحفظ...", "Saving...") : L("حفظ التغييرات", "Save Changes")}
+                                                </button>
+                                                <button
+                                                    onClick={handleCancelEdit}
+                                                    disabled={saveLoading}
+                                                    style={{
+                                                        padding: "9px 22px",
+                                                        background: "transparent",
+                                                        color: "var(--tx2)",
+                                                        border: "1px solid var(--bdr)",
+                                                        borderRadius: 8,
+                                                        cursor: "pointer",
+                                                        fontSize: 13,
+                                                        fontFamily: "inherit",
+                                                        transition: "border-color 0.2s",
+                                                    }}
+                                                >
+                                                    {L("إلغاء", "Cancel")}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        /* ══ وضع العرض ══ */
+                                        <>
+                                            <div className="profile-role-tag">
+                                                <span>●</span>
+                                                <span>{L(student.roleAr, student.roleEn)}</span>
+                                            </div>
+                                            <div className="profile-name">{student.nameAr}</div>
+                                            {student.bio && (
+                                                <div style={{ fontSize: 13, color: "var(--tx2)", marginTop: 4, maxWidth: 420, lineHeight: 1.6 }}>
+                                                    {student.bio}
+                                                </div>
+                                            )}
+                                            <div className="profile-meta">
+                                                {student.institution && (
+                                                    <div className="profile-meta-item">🏛️ {student.institution}</div>
+                                                )}
+                                                {student.institution && <div className="profile-meta-dot" />}
+                                                <div className="profile-meta-item">📍 {L(student.universityAr, student.universityEn)}</div>
+                                                {student.orcid_id && (
+                                                    <>
+                                                        <div className="profile-meta-dot" />
+                                                        <div className="profile-meta-item">🔬 ORCID: {student.orcid_id}</div>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
 
-                                {/* Edit */}
-                                <button className="edit-btn">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                    </svg>
-                                    {L("تعديل البروفايل", "Edit Profile")}
-                                </button>
+                                {/* زر التعديل — يختفي في وضع التعديل */}
+                                {!isEditing && (
+                                    <button className="edit-btn" onClick={handleStartEdit}>
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                        </svg>
+                                        {L("تعديل البروفايل", "Edit Profile")}
+                                    </button>
+                                )}
                             </div>
                         </div>
 
@@ -375,7 +517,6 @@ export default function StudentProfile() {
                     {/* PAGE BODY */}
                     <div className="page-body">
                         <div>
-
                             {/* TAB: RESEARCH */}
                             {activeTab === "research" && (
                                 <div>
@@ -418,15 +559,30 @@ export default function StudentProfile() {
                                 <div>
                                     <div className="section-label">{L("المعلومات الأساسية", "Basic Information")}</div>
                                     <div className="info-card">
-                                        <div className="info-card-title">🎓 {L("المعلومات الأكاديمية", "Academic Info")}</div>
+                                        <div className="info-card-title">👤 {L("معلومات الحساب", "Account Info")}</div>
                                         <div className="info-grid">
-                                            {academicInfo.map((item, i) => (
+                                            {[
+                                                { labelAr: "الاسم الكامل", labelEn: "Full Name", value: profile.full_name || "—", accent: true },
+                                                { labelAr: "البريد الإلكتروني", labelEn: "Email", value: profile.email || "—", accent: false },
+                                                { labelAr: "المؤسسة", labelEn: "Institution", value: profile.institution || "—", accent: false },
+                                                { labelAr: "ORCID ID", labelEn: "ORCID ID", value: profile.orcid_id || "—", accent: false },
+                                                { labelAr: "اللغة المفضلة", labelEn: "Preferred Language", value: profile.preferred_language === "ar" ? "العربية" : "English", accent: false },
+                                                { labelAr: "الدور", labelEn: "Role", value: profile.role || "—", accent: true },
+                                                { labelAr: "تاريخ الانضمام", labelEn: "Joined", value: profile.created_at ? new Date(profile.created_at).toLocaleDateString(isAr ? "ar-SY" : "en-GB") : "—", accent: false },
+                                                { labelAr: "تأكيد البريد", labelEn: "Email Verified", value: profile.email_verified ? L("مؤكد ✓", "Verified ✓") : L("غير مؤكد", "Not verified"), accent: false },
+                                            ].map((item, i) => (
                                                 <div className="info-item" key={i}>
                                                     <div className="info-item-label">{L(item.labelAr, item.labelEn)}</div>
                                                     <div className={`info-item-val${item.accent ? " ac" : ""}`}>{item.value}</div>
                                                 </div>
                                             ))}
                                         </div>
+                                        {profile.bio && (
+                                            <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--bdr)" }}>
+                                                <div style={{ fontSize: 11, color: "var(--tx3)", fontWeight: 600, marginBottom: 8 }}>{L("النبذة الشخصية", "Bio")}</div>
+                                                <div style={{ fontSize: 14, color: "var(--tx2)", lineHeight: 1.7 }}>{profile.bio}</div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}
@@ -457,7 +613,6 @@ export default function StudentProfile() {
 
                         {/* SIDEBAR */}
                         <div>
-                            {/* Level */}
                             {level && (
                                 <div className="level-section">
                                     <div className="section-label">{L("المستوى الأكاديمي", "Academic Level")}</div>
@@ -466,29 +621,10 @@ export default function StudentProfile() {
                                             <div className="level-name">{L(level.nameAr, level.nameEn)}</div>
                                             <div className="level-badge">{level.badge}</div>
                                         </div>
-                                        <div className="level-bar-wrap">
-                                            <div className="level-bar-labels">
-                                                <span>{L(`${level.currentPoints} نقطة`, `${level.currentPoints} pts`)}</span>
-                                                <span>{L(`${level.nextLevel} للترقي`, `${level.nextLevel} to next`)}</span>
-                                            </div>
-                                            <div className="level-bar-bg">
-                                                <div className="level-bar-fill" style={{ width: `${level.progressPercent}%` }} />
-                                            </div>
-                                        </div>
-                                        {level.milestones.length > 0 && (
-                                            <div className="level-milestones">
-                                                {level.milestones.map((m, i) => (
-                                                    <div className={`milestone${m.done ? " done" : ""}`} key={i}>
-                                                        {m.done ? "✓" : "⬡"} {L(m.name_ar || m.name, m.name_en || m.name)}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
                             )}
 
-                            {/* Skills */}
                             {skills.length > 0 && (
                                 <div className="side-card">
                                     <div className="side-card-title">{L("مجالات البحث", "Research Areas")}</div>
@@ -502,7 +638,6 @@ export default function StudentProfile() {
                                 </div>
                             )}
 
-                            {/* Social */}
                             {socialLinks.length > 0 && (
                                 <div className="side-card">
                                     <div className="side-card-title">{L("التواصل", "Contact")}</div>
@@ -519,7 +654,6 @@ export default function StudentProfile() {
                         </div>
                     </div>
 
-                    {/* FOOTER */}
                     <Footer isAr={isAr} footer={footer} Logo={Logo} />
                 </>
             )}
