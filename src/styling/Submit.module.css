@@ -1,0 +1,542 @@
+/* ══ TOKENS — imported from global :root / [data-theme] ══
+   هاد الملف بيفترض إنه عندك في index.css أو global.css:
+   --bg, --bg2, --surf, --surf2, --bd, --bd2,
+   --tx, --tx2, --tx3, --ac, --ac2,
+   --glow, --inp-bg, --inp-bd
+   بنفس القيم اللي بملف الـ HTML
+   ══════════════════════════════════════════════════════ */
+
+/* ══ PAGE CONTAINER ══ */
+.pageContainer {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--tx);
+  font-family: 'IBM Plex Sans Arabic', sans-serif;
+  line-height: 1.75;
+  padding-top: 108px;
+}
+
+/* ══ FORM CARD (wrapper يحل محل page-body + content-area) ══ */
+.formCard {
+  max-width: 780px;
+  margin: 36px auto 80px;
+  padding: 0 clamp(16px, 5%, 80px);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ══ PAGE HEADER TITLE ══ */
+.formTitle {
+  font-family: 'IBM Plex Sans Arabic', sans-serif;
+  font-size: clamp(1.6rem, 4vw, 2.8rem);
+  font-weight: 800;
+  color: var(--tx);
+  line-height: 1.15;
+  margin-bottom: 6px;
+}
+
+.formSubtitle {
+  font-size: 15px;
+  color: var(--tx2);
+  max-width: 560px;
+  line-height: 1.8;
+  border-inline-start: 2px solid var(--ac);
+  padding-inline-start: 14px;
+  margin-bottom: 8px;
+}
+
+/* ══ ERROR ALERT ══ */
+.errorAlert {
+  background: rgba(192, 84, 42, 0.08);
+  border: 1px solid rgba(192, 84, 42, 0.35);
+  border-radius: 3px;
+  color: #C0542A;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 12px 16px;
+  line-height: 1.6;
+}
+
+/* ══ MAIN FORM ══ */
+.mainForm {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ══ FORM SECTION (accordion card) ══ */
+.section {
+  background: var(--surf);
+  border: 1px solid var(--bd);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+/* Section title — acts as fs-header */
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--bd);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--tx);
+  background: transparent;
+  margin: 0;
+  /* counter circle — using ::before */
+  position: relative;
+}
+
+.sectionTitle::before {
+  content: counter(section-counter);
+  counter-increment: section-counter;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--glow);
+  border: 1px solid var(--bd2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--ac);
+  flex-shrink: 0;
+}
+
+/* reset counter on form */
+.mainForm {
+  counter-reset: section-counter;
+}
+
+/* ══ SECTION BODY ══ */
+.section > *:not(.sectionTitle) {
+  padding: 24px;
+}
+
+/* More precise: wrap inner content */
+/* Since JSX uses direct children, target inputGroup / keywordWrapper / fileUploadZone */
+.inputGroup,
+.keywordWrapper,
+.tagsContainer,
+.fileUploadZone {
+  padding: 0;
+}
+
+/* Compensate: put padding on section body wrapper */
+.section > div {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ══ INPUT GROUP ══ */
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 0 !important;
+}
+
+.inputGroup label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--tx2);
+}
+
+.required {
+  color: var(--ac);
+  margin-inline-start: 3px;
+}
+
+.inputGroup input[type="text"],
+.inputGroup textarea {
+  flex: 1;
+  width: 100%;
+  border: 1px solid var(--inp-bd);
+  border-radius: 2px;
+  outline: none;
+  background: var(--inp-bg);
+  font-size: 14px;
+  color: var(--tx);
+  font-family: inherit;
+  padding: 12px 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.inputGroup input[type="text"]:focus,
+.inputGroup textarea:focus {
+  border-color: var(--ac);
+  box-shadow: 0 0 0 3px var(--glow);
+}
+
+.inputGroup input[type="text"]::placeholder,
+.inputGroup textarea::placeholder {
+  color: var(--tx3);
+}
+
+.inputGroup textarea {
+  resize: vertical;
+  min-height: 130px;
+  line-height: 1.7;
+}
+
+/* Char counter */
+.charCount {
+  font-size: 11px;
+  color: var(--tx3);
+  text-align: end;
+  margin-top: 2px;
+  display: block;
+}
+
+/* ══ KEYWORDS SECTION ══ */
+.keywordWrapper {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 0 !important;
+}
+
+.keywordWrapper input[type="text"] {
+  flex: 1;
+  border: 1px solid var(--inp-bd);
+  border-radius: 2px;
+  outline: none;
+  background: var(--inp-bg);
+  font-size: 13px;
+  color: var(--tx);
+  font-family: inherit;
+  padding: 10px 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  min-width: 0;
+}
+
+.keywordWrapper input[type="text"]:focus {
+  border-color: var(--ac);
+  box-shadow: 0 0 0 3px var(--glow);
+}
+
+.keywordWrapper input[type="text"]::placeholder {
+  color: var(--tx3);
+}
+
+.addBtn {
+  display: inline-flex;
+  align-items: center;
+  border: 1.5px solid var(--bd2);
+  color: var(--tx2);
+  padding: 10px 18px;
+  border-radius: 2px;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.22s, color 0.22s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.addBtn:hover {
+  border-color: var(--ac);
+  color: var(--ac);
+}
+
+/* Tags container */
+.tagsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 28px;
+  padding: 0 !important;
+  margin-top: 4px;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(196, 165, 90, 0.1);
+  border: 1px solid rgba(196, 165, 90, 0.25);
+  color: var(--ac);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 100px;
+}
+
+.tag button {
+  background: none;
+  border: none;
+  color: var(--ac);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+  line-height: 1;
+  opacity: 0.7;
+  transition: opacity 0.15s;
+}
+
+.tag button:hover {
+  opacity: 1;
+}
+
+/* ══ FILE UPLOAD ZONE ══ */
+.fileUploadZone {
+  position: relative;
+  padding: 0 !important;
+}
+
+.hiddenFileInput {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+}
+
+.fileLabel {
+  border: 1.5px dashed var(--bd2);
+  border-radius: 3px;
+  padding: clamp(24px, 4vh, 40px) 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: border-color 0.22s, background 0.22s;
+  text-align: center;
+  background: var(--inp-bg);
+  color: var(--tx2);
+  font-size: 14px;
+  font-weight: 500;
+  position: relative;
+  z-index: 1;
+}
+
+.fileLabel:hover {
+  border-color: var(--ac);
+  background: var(--glow);
+}
+
+.uploadIcon {
+  font-size: 32px;
+  opacity: 0.45;
+  line-height: 1;
+}
+
+.fileName {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ac);
+  word-break: break-all;
+}
+
+/* ══ ACTION ROW ══ */
+.actionRow {
+  background: var(--surf);
+  border: 1px solid var(--bd);
+  border-radius: 4px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Primary submit button */
+.submitBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--ac);
+  color: #1A1510;
+  padding: 13px 28px;
+  border-radius: 2px;
+  border: none;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  font-family: inherit;
+  transition: filter 0.22s, transform 0.22s, box-shadow 0.22s;
+}
+
+.submitBtn:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(196, 165, 90, 0.3);
+}
+
+.submitBtn:disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Reset button */
+.resetBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 1.5px solid var(--bd2);
+  color: var(--tx2);
+  padding: 12px 22px;
+  border-radius: 2px;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.22s, color 0.22s;
+}
+
+.resetBtn:hover:not(:disabled) {
+  border-color: var(--ac);
+  color: var(--ac);
+}
+
+.resetBtn:disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* ══ SUCCESS OVERLAY ══ */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.overlayCard {
+  background: var(--surf);
+  border: 1px solid var(--bd2);
+  border-radius: 4px;
+  max-width: 480px;
+  width: 100%;
+  padding: 44px 36px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.successCheck {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 2px solid var(--ac);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  animation: ringPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes ringPop {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+.overlayCard h3 {
+  font-family: 'IBM Plex Sans Arabic', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--tx);
+  margin: 0;
+}
+
+.overlayCard p {
+  font-size: 14px;
+  color: var(--tx2);
+  line-height: 1.75;
+  max-width: 320px;
+  margin: 0;
+}
+
+.refBox {
+  font-size: 11px;
+  color: var(--tx3);
+  font-family: monospace;
+  background: var(--surf2);
+  border: 1px solid var(--bd);
+  padding: 6px 14px;
+  border-radius: 2px;
+  letter-spacing: 1px;
+}
+
+.closeOverlayBtn {
+  display: inline-flex;
+  align-items: center;
+  background: var(--ac);
+  color: #1A1510;
+  padding: 11px 28px;
+  border-radius: 2px;
+  border: none;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  font-family: inherit;
+  transition: filter 0.22s, transform 0.22s, box-shadow 0.22s;
+}
+
+.closeOverlayBtn:hover {
+  filter: brightness(1.08);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(196, 165, 90, 0.3);
+}
+
+/* ══ SCROLLBAR ══ */
+.pageContainer ::-webkit-scrollbar { width: 5px; }
+.pageContainer ::-webkit-scrollbar-track { background: transparent; }
+.pageContainer ::-webkit-scrollbar-thumb { border-radius: 3px; background: var(--bd2); }
+
+/* ══ RESPONSIVE ══ */
+@media (max-width: 600px) {
+  .formCard {
+    padding: 0 16px;
+  }
+
+  .actionRow {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .submitBtn,
+  .resetBtn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .overlayCard {
+    padding: 32px 20px;
+  }
+
+  .keywordWrapper {
+    flex-wrap: wrap;
+  }
+
+  .addBtn {
+    width: 100%;
+    justify-content: center;
+  }
+}

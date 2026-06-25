@@ -3,14 +3,15 @@ import { isAuthenticated, logout } from '../api/auth';
 import { useNavigate } from 'react-router-dom'; 
 import { Ara, Eng } from '../i18n';
 
-// ══ MENU ITEMS — ثابتة لكل صفحات الموقع، هون مكانها الصح ══
+// ══ MENU ITEMS — ثابتة وتظهر دائماً بالترتيب الكامل ══
 const MENU_ITEMS = [
-  { key: "home",        num: "01", href: "/" },
-  { key: "research",    num: "02", href: "/research_review" },
-  { key: "researchers", num: "03", href: "#" },
-  { key: "integrity",   num: "04", href: "#" },
-  { key: "contact",     num: "05", href: "#" },
-  { key: "profile",     num: "06", href: "/Profile" },
+  { key: "home",         num: "01", href: "/" },
+  { key: "research",     num: "02", href: "/research_review" },
+  { key: "researchers",  num: "03", href: "#" },
+  { key: "integrity",    num: "04", href: "#" },
+  { key: "contact",      num: "05", href: "#" },
+  { key: "profile",      num: "06", href: "/Profile" },
+  { key: "submit",       num: "07", href: "/submit" }, 
 ];
 
 export default function Navbar({ 
@@ -30,13 +31,28 @@ export default function Navbar({
 }) { 
   const loggedIn = isAuthenticated(); 
   const navigate = useNavigate(); 
-  const visibleMenuItems = loggedIn ? MENU_ITEMS : MENU_ITEMS.filter(item => item.key !== "Profile");
+
+  // القائمة كاملة دائماً بدون حذف أي عنصر
+  const visibleMenuItems = MENU_ITEMS;
 
   const handleLogout = async () => { 
     await logout(); 
     setMenuOpen(false); 
     navigate('/'); 
   }; 
+
+  // دالة حماية الروابط عند الضغط
+  const handleLinkClick = (e, href, key) => {
+    // إذا كبس على البروفايل أو النشر وماله مسجل دخول، منمنع الانتقال الافتراضي ومنشحطه عالـ auth
+    if ((key === "profile" || key === "submit") && !loggedIn) {
+      e.preventDefault(); // منع الرابط الأصلي
+      setMenuOpen(false); // تسكير المنيو
+      navigate('/auth');  // توجيه لصفحة تسجيل الدخول
+    } else {
+      // إذا أموره تمام أو عم يكبس على روابط تانية، بس بسكر المنيو وبيكمل طريقه
+      setMenuOpen(false);
+    }
+  };
 
   return ( 
     <> 
@@ -73,7 +89,7 @@ export default function Navbar({
                   href={item.href} 
                   onMouseEnter={() => setHoveredMenu(i)} 
                   onMouseLeave={() => setHoveredMenu(null)} 
-                  onClick={() => setMenuOpen(false)} 
+                  onClick={(e) => handleLinkClick(e, item.href, item.key)} // ربط الدالة هون لحماية الرابط
                 > 
                   <div className="aspu-ml-row"> 
                     <span className="aspu-ml-name">{menuT[item.key]}</span> 
@@ -115,7 +131,7 @@ export default function Navbar({
               {isAr ? "تسجيل الخروج" : "Sign Out"} 
             </button> 
           ) : ( 
-            <a href="/Auth" className="aspu-menu-login-btn"> 
+            <a href="/Auth" className="aspu-menu-login-btn" onClick={() => setMenuOpen(false)}> 
               {menuT.login} 
             </a> 
           )} 

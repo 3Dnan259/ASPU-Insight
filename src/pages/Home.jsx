@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { MagnifyingGlass, Archive, ShieldCheck, GitPullRequest, Translate, ChartLineUp } from "@phosphor-icons/react";
 import { useTranslation, initReactI18next } from "react-i18next";
 import i18n from "i18next";
 import { resources } from "../i18n";
@@ -110,6 +111,8 @@ function ResearchCard({ card, isAr, tr }) {
             {isAr ? tag.ar : tag.en}
           </span>
         ))}
+
+
       </div>
       <h3 className="aspu-r-h">{isAr ? card.titleAr : card.titleEn}</h3>
       <p className="aspu-r-body">{isAr ? card.bodyAr : card.bodyEn}</p>
@@ -144,10 +147,10 @@ function ResearchCard({ card, isAr, tr }) {
 
 // ══ SCROLL HIJACK — منطق مطابق 100% للـ HTML الشغال ══
 function ScrollHijack({ isAr, t }) {
-  const wrapRef  = useRef(null);
+  const wrapRef = useRef(null);
   const stripRef = useRef(null);
 
-  const N   = RESEARCH_CARDS.length;
+  const N = RESEARCH_CARDS.length;
   const SPC = 420;               // مسافة سكرول ثابتة per card — نفس الـ HTML
   const TOT = SPC * (N - 1);    // إجمالي مسافة السكرول
 
@@ -156,7 +159,7 @@ function ScrollHijack({ isAr, t }) {
 
   useEffect(() => {
     const wrapper = wrapRef.current;
-    const strip   = stripRef.current;
+    const strip = stripRef.current;
     if (!wrapper || !strip) return;
 
     // ← نفس الـ HTML: height = 100vh + TOT (مش 100vh × N)
@@ -177,10 +180,10 @@ function ScrollHijack({ isAr, t }) {
     let rafId;
 
     function tick() {
-      const rect     = wrapper.getBoundingClientRect();
+      const rect = wrapper.getBoundingClientRect();
       const scrolled = Math.max(0, -rect.top);
-      const clamped  = Math.min(TOT, scrolled);
-      const trackW   = strip.parentElement.offsetWidth;
+      const clamped = Math.min(TOT, scrolled);
+      const trackW = strip.parentElement.offsetWidth;
 
       // ← نفس الـ HTML: target = (clamped / SPC) * trackW
       const target = (clamped / SPC) * trackW;
@@ -192,7 +195,7 @@ function ScrollHijack({ isAr, t }) {
       const isRtl = document.documentElement.getAttribute("dir") === "rtl";
       strip.style.transform = `translateX(${(isRtl ? 1 : -1) * off}px)`;
 
-      const cf     = clamped / SPC;
+      const cf = clamped / SPC;
       const newIdx = Math.min(N - 1, Math.round(cf));
       const newPct = Math.min(1, N > 1 ? cf / (N - 1) : 0) * 100;
 
@@ -265,12 +268,12 @@ function ScrollHijack({ isAr, t }) {
 
 // ══ MAIN COMPONENT ══
 export default function ASPUInsight() {
-  const [theme, setThemeState]        = useState("light");
-  const [lang,  setLangState]         = useState("ar");
-  const [menuOpen, setMenuOpen]       = useState(false);
-  const [scrolled, setScrolled]       = useState(false);
+  const [theme, setThemeState] = useState("light");
+  const [lang, setLangState] = useState("ar");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const [hoveredMenu, setHoveredMenu] = useState(null);
-  const [rotateIdx, setRotateIdx]     = useState(0);
+  const [rotateIdx, setRotateIdx] = useState(0);
   const [rotateVisible, setRotateVisible] = useState(true);
 
   const { t, i18n: i18nInst } = useTranslation();
@@ -285,7 +288,7 @@ export default function ASPUInsight() {
   const setLang = useCallback((l) => {
     setLangState(l);
     i18nInst.changeLanguage(l);
-    document.documentElement.setAttribute("dir",  l === "ar" ? "rtl" : "ltr");
+    document.documentElement.setAttribute("dir", l === "ar" ? "rtl" : "ltr");
     document.documentElement.setAttribute("lang", l);
   }, [i18nInst]);
 
@@ -332,7 +335,7 @@ export default function ASPUInsight() {
       cx += (mx - cx) * 0.1;
       cy += (my - cy) * 0.1;
       el.style.left = cx + "px";
-      el.style.top  = cy + "px";
+      el.style.top = cy + "px";
       raf = requestAnimationFrame(loop);
     };
     raf = requestAnimationFrame(loop);
@@ -346,16 +349,24 @@ export default function ASPUInsight() {
     document.body.style.overflow = menuOpen ? "hidden" : "";
   }, [menuOpen]);
 
-  const h        = t("hero",     { returnObjects: true });
-  const stats    = t("stats",    { returnObjects: true });
-  const search   = t("search",   { returnObjects: true });
+  const h = t("hero", { returnObjects: true });
+  const stats = t("stats", { returnObjects: true });
+  const search = t("search", { returnObjects: true });
   const sections = t("sections", { returnObjects: true });
-  const gallery  = t("gallery",  { returnObjects: true });
+  const gallery = t("gallery", { returnObjects: true });
   const features = t("features", { returnObjects: true });
-  const footer   = t("footer",   { returnObjects: true });
-  const menuT    = t("menu",     { returnObjects: true });
-  const navT     = t("nav",      { returnObjects: true });
+  const footer = t("footer", { returnObjects: true });
+  const menuT = t("menu", { returnObjects: true });
+  const navT = t("nav", { returnObjects: true });
 
+  const FEAT_ICONS = [
+    <MagnifyingGlass size={30} weight="duotone" />,
+    <ShieldCheck size={30} weight="duotone" />,
+    <Archive size={30} weight="duotone" />,
+    <GitPullRequest size={30} weight="duotone" />,
+    <ChartLineUp size={30} weight="duotone" />,
+    <Translate size={30} weight="duotone" />,
+  ];
   return (
     <div
       className={`aspu-root${menuOpen ? " menu-is-open" : ""}`}
@@ -408,7 +419,7 @@ export default function ASPUInsight() {
             <a className="aspu-btn-gold" href="/research_review">
               {h.cta1} <span className="arr">→</span>
             </a>
-            <button className="aspu-btn-outline">{h.cta2}</button>
+            <a href="/submit" className="aspu-btn-outline">{h.cta2}</a>
           </div>
         </div>
 
@@ -477,9 +488,9 @@ export default function ASPUInsight() {
                 </div>
               ))}
             </div>
-            <button className="aspu-btn-gold">
+            <a href="/submit" className="aspu-btn-gold">
               {gallery.cta} <span className="arr">→</span>
-            </button>
+            </a>
           </div>
           <div className="aspu-gallery-grid">
             {GALLERY_IMAGES.map((img, i) => (
@@ -502,7 +513,7 @@ export default function ASPUInsight() {
           <div className="aspu-feat-grid">
             {features.items.map((f, i) => (
               <div key={i} className="aspu-feat-card">
-                <div className="aspu-feat-ico">{f.icon}</div>
+                <div className="aspu-feat-ico">{FEAT_ICONS[i]}</div>
                 <div className="aspu-feat-num">{f.num}</div>
                 <div className="aspu-feat-h">{f.h}</div>
                 <div className="aspu-feat-d">{f.d}</div>

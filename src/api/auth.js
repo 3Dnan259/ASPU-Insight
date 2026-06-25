@@ -38,8 +38,9 @@ export const updateProfile = async (payload) => {
   return data;
 };
 
+//خالص
 export const changePassword = async (oldPassword, newPassword, confirmPassword) => {
-  const { data } = await api.post('/api/auth/change-password/', {
+  const { data } = await api.post('/api/auth/ASPU-2004/change-password/', {
     old_password: oldPassword,
     new_password: newPassword,
     confirm_password: confirmPassword,
@@ -48,12 +49,12 @@ export const changePassword = async (oldPassword, newPassword, confirmPassword) 
 };
 
 export const requestPasswordReset = async (email) => {
-  const { data } = await api.post('/api/auth/password-reset/', { email });
+  const { data } = await api.post('/api/auth/ASPU-2004/password-reset/', { email });
   return data;
 };
 
 export const confirmPasswordReset = async (token, newPassword, confirmPassword) => {
-  const { data } = await api.post('/api/auth/password-reset/confirm/', {
+  const { data } = await api.post('/api/auth/ASPU-2004/password-reset/confirm/', {
     token,
     new_password: newPassword,
     confirm_password: confirmPassword,
@@ -62,20 +63,12 @@ export const confirmPasswordReset = async (token, newPassword, confirmPassword) 
 };
 
 export const verifyEmail = async (token) => {
-  const { data } = await api.post('/api/auth/verify-email/', { token });
+  const { data } = await api.post('/api/auth/ASPU-2004/verify-email/', { token });
   return data;
 };
 
-export const isAuthenticated = () => !!localStorage.getItem('access_token');
 
-export const getCurrentUser = () => {
-  try {
-    return JSON.parse(localStorage.getItem('user'));
-  } catch {
-    return null;
-  }
-};
-
+//خالص
 export const enable2FA = async () => {
   const { data } = await api.post('/api/auth/ASPU-2004/2fa/enable/');
   return data; // { secret, qr_code_url, message }
@@ -85,4 +78,15 @@ export const enable2FA = async () => {
 export const confirm2FA = async (otp_code) => {
   const { data } = await api.post('/api/auth/ASPU-2004/2fa/confirm/', { otp_code });
   return data;
+};
+
+
+export const isAuthenticated = () => !!localStorage.getItem('access_token');
+
+export const getCurrentUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem('user'));
+  } catch {
+    return null;
+  }
 };

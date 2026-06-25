@@ -2,27 +2,38 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
 import ResearchReview from './pages/ResearchReview';
+import PaperDetail from './pages/PaperDetail';
 import StudentProfile from './pages/Profile';
 import Home from './pages/Home';
 import Auth from './pages/Auth';
-import SetupTwoFA from "./pages/SetupTwoFA";
-import VerifyOTP from "./pages/VerifyOTP";
+import SetupTwoFA from './pages/SetupTwoFA';
+import VerifyOTP from './pages/VerifyOTP';
+import Submit from './pages/Submit';
 
 function App() {
   return (
     <AuthProvider>
       <Router>
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/research_review" element={<ResearchReview />} />
-          <Route path="/setup-2fa" element={<SetupTwoFA />} />
-          <Route path="/verify-otp" element={<VerifyOTP />} />
+          <Route path="/"                  element={<Home />} />
+          <Route path="/auth"              element={<Auth />} />
+          <Route path="/research_review"   element={<ResearchReview />} />
+          <Route path="/papers/:id"        element={<PaperDetail />} />   {/* ← جديد */}
+          <Route path="/setup-2fa"         element={<SetupTwoFA />} />
+          <Route path="/verify-otp"        element={<VerifyOTP />} />
           <Route
             path="/Profile"
             element={
               <ProtectedRoute redirectTo="/auth">
                 <StudentProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/submit"
+            element={
+              <ProtectedRoute redirectTo="/auth">
+                <Submit />
               </ProtectedRoute>
             }
           />

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import "../styling/Profile.css";
-import { getProfile, updateProfile } from "../api/Auth";
+import { updateProfile, changePassword } from "../api/Auth";
+import api from "../api/client";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import Logo from "../components/Logo";
@@ -108,6 +109,133 @@ function EditField({ label, value, onChange, type = "text", placeholder = "" }) 
     );
 }
 
+/* ══ CHANGE PASSWORD MODAL ══ */
+function ChangePasswordModal({ onClose, L }) {
+    const [oldPassword, setOldPassword] = useState("");
+    const [newPassword, setNewPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+    const [success, setSuccess] = useState(false);
+
+    const handleSubmit = async () => {
+        setError("");
+
+        if (!oldPassword || !newPassword || !confirmPassword) {
+            setError(L("يرجى تعبئة جميع الحقول", "Please fill in all fields"));
+            return;
+        }
+        if (newPassword !== confirmPassword) {
+            setError(L("كلمتا المرور الجديدتان غير متطابقتين", "New passwords do not match"));
+            return;
+        }
+        if (newPassword.length < 8) {
+            setError(L("يجب أن تكون كلمة المرور 8 أحرف على الأقل", "Password must be at least 8 characters"));
+            return;
+        }
+
+        setLoading(true);
+        try {
+            await changePassword(oldPassword, newPassword, confirmPassword);
+            setSuccess(true);
+            setTimeout(() => onClose(), 1200);
+        } catch (err) {
+            const errData = err?.response?.data;
+            setError(
+                errData
+                    ? Object.values(errData).flat().join(" ")
+                    : L("فشل تغيير كلمة المرور. حاول مرة أخرى.", "Failed to change password. Please try again.")
+            );
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div
+            style={{
+                position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                zIndex: 1000, padding: 20,
+            }}
+            onClick={onClose}
+        >
+            <div
+                style={{
+                    background: "var(--surf1)", borderRadius: 12, padding: 28,
+                    width: "100%", maxWidth: 380, boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+                }}
+                onClick={e => e.stopPropagation()}
+            >
+                <div style={{ fontSize: 17, fontWeight: 700, color: "var(--tx1)", marginBottom: 20 }}>
+                    {L("تغيير كلمة المرور", "Change Password")}
+                </div>
+
+                <EditField
+                    label={L("كلمة المرور الحالية", "Current Password")}
+                    type="password"
+                    value={oldPassword}
+                    onChange={setOldPassword}
+                    placeholder={L("أدخل كلمة المرور الحالية", "Enter current password")}
+                />
+                <EditField
+                    label={L("كلمة المرور الجديدة", "New Password")}
+                    type="password"
+                    value={newPassword}
+                    onChange={setNewPassword}
+                    placeholder={L("أدخل كلمة المرور الجديدة", "Enter new password")}
+                />
+                <EditField
+                    label={L("تأكيد كلمة المرور الجديدة", "Confirm New Password")}
+                    type="password"
+                    value={confirmPassword}
+                    onChange={setConfirmPassword}
+                    placeholder={L("أعد إدخال كلمة المرور الجديدة", "Re-enter new password")}
+                />
+
+                {error && (
+                    <div style={{ fontSize: 12, color: "#C0542A", marginBottom: 10, padding: "8px 12px", background: "rgba(192,84,42,0.08)", borderRadius: 6 }}>
+                        {error}
+                    </div>
+                )}
+                {success && (
+                    <div style={{ fontSize: 12, color: "#2A8A5A", marginBottom: 10, padding: "8px 12px", background: "rgba(42,138,90,0.08)", borderRadius: 6 }}>
+                        {L("✓ تم تغيير كلمة المرور بنجاح", "✓ Password changed successfully")}
+                    </div>
+                )}
+
+                <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
+                    <button
+                        onClick={handleSubmit}
+                        disabled={loading}
+                        style={{
+                            padding: "9px 22px", background: "var(--ac)", color: "#fff",
+                            border: "none", borderRadius: 8,
+                            cursor: loading ? "not-allowed" : "pointer",
+                            fontSize: 13, fontFamily: "inherit", fontWeight: 600,
+                            opacity: loading ? 0.7 : 1, transition: "opacity 0.2s",
+                        }}
+                    >
+                        {loading ? L("جارٍ الحفظ...", "Saving...") : L("تغيير كلمة المرور", "Change Password")}
+                    </button>
+                    <button
+                        onClick={onClose}
+                        disabled={loading}
+                        style={{
+                            padding: "9px 22px", background: "transparent", color: "var(--tx2)",
+                            border: "1px solid var(--bdr)", borderRadius: 8,
+                            cursor: "pointer", fontSize: 13, fontFamily: "inherit",
+                            transition: "border-color 0.2s",
+                        }}
+                    >
+                        {L("إلغاء", "Cancel")}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 /* ══ MAIN COMPONENT ══ */
 export default function StudentProfile() {
     const [theme, setTheme] = useState("light");
@@ -124,6 +252,9 @@ export default function StudentProfile() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // ← Guard يمنع الاستدعاء المزدوج في React StrictMode
+    const hasFetched = useRef(false);
+
     // ══ EDIT STATE ══
     const [isEditing, setIsEditing] = useState(false);
     const [saveLoading, setSaveLoading] = useState(false);
@@ -135,14 +266,22 @@ export default function StudentProfile() {
         orcid_id: "",
         bio: "",
         preferred_language: "ar",
+        profile_picture_url: "",
+        role: "author",
     });
+    const [avatarPreview, setAvatarPreview] = useState(null);
+    const [avatarFile, setAvatarFile] = useState(null);
+    const avatarInputRef = useRef(null);
 
-    // ══ FETCH PROFILE ══
+    // ══ CHANGE PASSWORD MODAL STATE ══
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
+
+    // ══ FETCH PROFILE — مرة واحدة فقط ══
     const fetchProfile = async () => {
         setLoading(true);
         setError(null);
         try {
-            const data = await getProfile();
+            const { data } = await api.get('/api/auth/ASPU-2004/profile/');
             setProfile(data);
         } catch (err) {
             setError(err?.response?.data?.detail || err.message || "Unknown error");
@@ -151,9 +290,15 @@ export default function StudentProfile() {
         }
     };
 
-    useEffect(() => { fetchProfile(); }, []);
+    useEffect(() => {
+        // ← هذا الـ guard هو الحل لمشكلة الـ 4 calls
+        // React StrictMode بيشغّل كل effect مرتين في dev، والـ ref بيمنع التكرار
+        if (hasFetched.current) return;
+        hasFetched.current = true;
+        fetchProfile();
+    }, []);
 
-    // ══ عند فتح وضع التعديل: احشي الفورم من البروفايل الحالي ══
+    // ══ عند فتح وضع التعديل ══
     const handleStartEdit = () => {
         setEditForm({
             full_name: profile.full_name || "",
@@ -161,7 +306,11 @@ export default function StudentProfile() {
             orcid_id: profile.orcid_id || "",
             bio: profile.bio || "",
             preferred_language: profile.preferred_language || "ar",
+            profile_picture_url: profile.profile_picture_url || "",
+            role: profile.role || "author",
         });
+        setAvatarPreview(null);
+        setAvatarFile(null);
         setSaveError("");
         setSaveSuccess(false);
         setIsEditing(true);
@@ -172,15 +321,18 @@ export default function StudentProfile() {
         setIsEditing(false);
         setSaveError("");
         setSaveSuccess(false);
+        setAvatarPreview(null);
+        setAvatarFile(null);
     };
 
-    // ══ حفظ التعديلات ══
+    // ══ حفظ التعديلات — مُصلَح للصور ══
     const handleSave = async () => {
         setSaveLoading(true);
         setSaveError("");
         setSaveSuccess(false);
+
         try {
-            // بعث بس الحقول اللي تغيّرت
+            // احسب الحقول المتغيرة فقط
             const changed = {};
             Object.keys(editForm).forEach(key => {
                 if (editForm[key] !== (profile[key] || "")) {
@@ -188,24 +340,75 @@ export default function StudentProfile() {
                 }
             });
 
-            if (Object.keys(changed).length === 0) {
+            const hasChanges = Object.keys(changed).length > 0;
+            const hasNewAvatar = !!avatarFile;
+
+            // لو ما في شي اتغير، اغلق وضع التعديل بس
+            if (!hasChanges && !hasNewAvatar) {
                 setIsEditing(false);
                 return;
             }
 
-            const updated = await updateProfile(changed);
+            let updated;
+
+            if (hasNewAvatar) {
+                // ← الإصلاح الأساسي: استخدام FormData بدل JSON لإرسال الصورة
+                const formData = new FormData();
+
+                // أضف كل الحقول المتغيرة
+                Object.keys(changed).forEach(key => {
+                    formData.append(key, changed[key]);
+                });
+
+                // أضف ملف الصورة — اسم الحقل "profile_picture" حسب ما يتوقع الباك
+                formData.append("profile_picture", avatarFile, avatarFile.name);
+
+                updated = await updateProfile(formData);
+            } else {
+                // لا يوجد صورة جديدة — أبعت JSON عادي
+                updated = await updateProfile(changed);
+            }
+
             setProfile(prev => ({ ...prev, ...updated }));
             setSaveSuccess(true);
+
             setTimeout(() => {
                 setIsEditing(false);
                 setSaveSuccess(false);
+                setAvatarPreview(null);
+                setAvatarFile(null);
             }, 1200);
+
         } catch (err) {
-            const data = err?.response?.data;
-            setSaveError(data ? Object.values(data).flat().join(" ") : (L("فشل الحفظ. حاول مرة أخرى.", "Save failed. Please try again.")));
+            const errData = err?.response?.data;
+            setSaveError(
+                errData
+                    ? Object.values(errData).flat().join(" ")
+                    : L("فشل الحفظ. حاول مرة أخرى.", "Save failed. Please try again.")
+            );
         } finally {
             setSaveLoading(false);
         }
+    };
+
+    // ══ معالجة اختيار الصورة ══
+    const handleAvatarChange = (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (!file.type.startsWith("image/")) {
+            setSaveError(L("الملف يجب أن يكون صورة", "File must be an image"));
+            return;
+        }
+        if (file.size > 5 * 1024 * 1024) {
+            setSaveError(L("الصورة يجب أن تكون أقل من 5MB", "Image must be less than 5MB"));
+            return;
+        }
+
+        setAvatarFile(file);
+        // أنشئ preview URL مؤقت للعرض فقط، ما بينعكس على الباك
+        setAvatarPreview(URL.createObjectURL(file));
+        setSaveError("");
     };
 
     // ══ SIDE EFFECTS ══
@@ -319,18 +522,39 @@ export default function StudentProfile() {
 
                             <div className="profile-card-top">
                                 {/* Avatar */}
-                                <div className="avatar-wrap">
+                                <div
+                                    className="avatar-wrap"
+                                    style={{ cursor: isEditing ? "pointer" : "default" }}
+                                    onClick={() => isEditing && avatarInputRef.current?.click()}
+                                >
                                     <div className="avatar">
-                                        {student.avatarUrl
-                                            ? <img src={student.avatarUrl} alt={student.nameAr} />
-                                            : student.avatarInitial}
+                                        {avatarPreview
+                                            ? <img src={avatarPreview} alt="preview" />
+                                            : student.avatarUrl
+                                                ? <img src={student.avatarUrl} alt={student.nameAr} />
+                                                : student.avatarInitial}
                                     </div>
                                     <div className="avatar-ring" />
                                     <div className="avatar-ring-spin" />
-                                    <div className="avatar-badge">🎓</div>
+                                    <div className="avatar-badge">{isEditing ? "📷" : "🎓"}</div>
+                                    {isEditing && (
+                                        <div style={{
+                                            position: "absolute", inset: 0, borderRadius: "50%",
+                                            background: "rgba(0,0,0,0.35)", display: "flex",
+                                            alignItems: "center", justifyContent: "center",
+                                            fontSize: 22, opacity: 0.85,
+                                        }}>📷</div>
+                                    )}
+                                    <input
+                                        ref={avatarInputRef}
+                                        type="file"
+                                        accept="image/*"
+                                        style={{ display: "none" }}
+                                        onChange={handleAvatarChange}
+                                    />
                                 </div>
 
-                                {/* Info — عرض أو تعديل */}
+                                {/* Info */}
                                 <div className="profile-info">
                                     {isEditing ? (
                                         /* ══ وضع التعديل ══ */
@@ -353,6 +577,40 @@ export default function StudentProfile() {
                                                 onChange={v => setEditForm(f => ({ ...f, orcid_id: v }))}
                                                 placeholder="0000-0000-0000-0000"
                                             />
+
+                                            {/* الدور */}
+                                            <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
+                                                <label style={{ fontSize: 11, color: "var(--tx3)", fontWeight: 600, letterSpacing: "0.05em" }}>
+                                                    {L("الدور", "Role")}
+                                                </label>
+                                                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                                                    {[
+                                                        { val: "author", arLabel: "مؤلف / باحث" },
+                                                        { val: "reviewer", arLabel: "مراجع" },
+                                                        { val: "editor", arLabel: "محرر" },
+                                                    ].map(opt => (
+                                                        <button
+                                                            key={opt.val}
+                                                            onClick={() => setEditForm(f => ({ ...f, role: opt.val }))}
+                                                            style={{
+                                                                padding: "7px 18px",
+                                                                borderRadius: 6,
+                                                                border: "1px solid",
+                                                                borderColor: editForm.role === opt.val ? "var(--ac)" : "var(--bdr)",
+                                                                background: editForm.role === opt.val ? "var(--ac)" : "transparent",
+                                                                color: editForm.role === opt.val ? "#fff" : "var(--tx2)",
+                                                                cursor: "pointer",
+                                                                fontSize: 13,
+                                                                fontFamily: "inherit",
+                                                                transition: "all 0.2s",
+                                                            }}
+                                                        >
+                                                            {L(opt.arLabel, opt.val.charAt(0).toUpperCase() + opt.val.slice(1))}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
                                             <EditField
                                                 label={L("نبذة شخصية", "Bio")}
                                                 value={editForm.bio}
@@ -472,15 +730,24 @@ export default function StudentProfile() {
                                     )}
                                 </div>
 
-                                {/* زر التعديل — يختفي في وضع التعديل */}
+                                {/* أزرار التعديل */}
                                 {!isEditing && (
-                                    <button className="edit-btn" onClick={handleStartEdit}>
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                        </svg>
-                                        {L("تعديل البروفايل", "Edit Profile")}
-                                    </button>
+                                    <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                                        <button className="edit-btn" onClick={handleStartEdit}>
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                            </svg>
+                                            {L("تعديل البروفايل", "Edit Profile")}
+                                        </button>
+                                        <button className="edit-btn" onClick={() => setShowPasswordModal(true)}>
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                                            </svg>
+                                            {L("تغيير كلمة المرور", "Change Password")}
+                                        </button>
+                                    </div>
                                 )}
                             </div>
                         </div>
@@ -656,6 +923,10 @@ export default function StudentProfile() {
 
                     <Footer isAr={isAr} footer={footer} Logo={Logo} />
                 </>
+            )}
+
+            {showPasswordModal && (
+                <ChangePasswordModal onClose={() => setShowPasswordModal(false)} L={L} />
             )}
         </>
     );

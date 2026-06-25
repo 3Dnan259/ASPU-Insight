@@ -1,437 +1,557 @@
-import { useState, useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { register as apiRegister, requestPasswordReset, verifyEmail } from "../api/auth";
+import { useState, useEffect, useRef } from "react";
+import { QRCodeSVG } from "qrcode.react";
+import { login, register, enable2FA, confirm2FA } from "../api/auth";
 import "../styling/Auth.css";
-import Logo from "../components/Logo";
-import { Ara, Eng } from "../i18n";
 
-const EyeOn  = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>;
-const EyeOff = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>;
-const BackArrow = () => <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M9 2L4 7L9 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+// ─── Top Bar ──────────────────────────────────────────────────────────────────
+// Only language switcher — no theme toggle (light is the default per design)
+function TopBar({ lang, setLang }) {
+  return (
+    <header className="auth-topbar">
+      {/* Logo — right side in RTL */}
+      <a href="/" className="auth-tb-logo">
+        <svg style={{ width: 34, height: 34, flexShrink: 0 }} viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+          <rect width="40" height="40" rx="8" fill="#0D0F12"/>
+          <circle cx="20" cy="19" r="14" fill="none" stroke="#C4A55A" strokeWidth="0.6" opacity="0.5"/>
+          <path d="M14,22 Q14,14 20,12 Q26,14 26,22 Q26,28 20,29 Q14,28 14,22 Z" fill="#141820" stroke="#C4A55A" strokeWidth="0.9"/>
+          <line x1="20" y1="12" x2="20" y2="29" stroke="#C4A55A" strokeWidth="1"/>
+          <polygon points="20,13 16.5,20 23.5,20" fill="#C4A55A"/>
+          <line x1="16.4" y1="20" x2="13" y2="24" stroke="#5A8FA0" strokeWidth="1.2" strokeLinecap="round"/>
+          <line x1="20" y1="20" x2="20" y2="26" stroke="#C4A55A" strokeWidth="1.4" strokeLinecap="round"/>
+          <line x1="23.6" y1="20" x2="27" y2="24" stroke="#7A5A30" strokeWidth="1.2" strokeLinecap="round"/>
+          <circle cx="20" cy="13" r="1.5" fill="#E8D090"/>
+        </svg>
+        <div>
+          <div className="auth-tb-name">ASPU Insight</div>
+          <div className="auth-tb-sub">{lang === "ar" ? "المجلة الأكاديمية" : "Academic Journal"}</div>
+        </div>
+      </a>
 
-function calcStrength(v) {
-  let s = 0;
-  if (v.length >= 8) s++;
-  if (/[A-Za-z\u0600-\u06FF]/.test(v) && /[0-9]/.test(v)) s++;
-  if (v.length >= 12) s++;
-  if (/[^A-Za-z0-9\u0600-\u06FF]/.test(v)) s++;
-  return s;
+      {/* Language pill only */}
+      <div className="auth-pill">
+        <button className={`auth-pill-btn ${lang === "ar" ? "on" : ""}`} onClick={() => setLang("ar")}>ع</button>
+        <button className={`auth-pill-btn ${lang === "en" ? "on" : ""}`} onClick={() => setLang("en")}>EN</button>
+      </div>
+    </header>
+  );
 }
-const STR_LABELS = {
-  ar: ["أدخل كلمة مرور", "ضعيفة", "ضعيفة", "مقبولة", "قوية"],
-  en: ["Enter a password", "Weak", "Weak", "Fair", "Strong"],
-};
 
-export default function Auth() {
-  const navigate  = useNavigate();
-  const location  = useLocation();
-  const { login, error: authError, clearError } = useAuth();
+// ─── Accent Panel ─────────────────────────────────────────────────────────────
+function AccentPanel({ lang }) {
+  return (
+    <div className="auth-accent">
+      <div className="auth-ac-grid" />
+      <div className="auth-ac-ring" style={{ width: 380, height: 380, top: -120, right: -100 }} />
+      <div className="auth-ac-ring" style={{ width: 180, height: 180, bottom: 70, left: -50 }} />
+      <div className="auth-ac-ring" style={{ width: 80, height: 80, bottom: 30, right: 50, borderColor: "rgba(0,0,0,.06)" }} />
 
-  const from = location.state?.from?.pathname || "/";
+      <div className="auth-ac-top">
+        <div className="auth-ac-eyebrow">
+          <div className="auth-ac-dot" />
+          {lang === "ar" ? "جامعة الشام الخاصة" : "Al-Sham Private University"}
+        </div>
+        <div className="auth-ac-big">
+          ASPU<br /><span className="dim">INSIGHT</span>
+        </div>
+        <p className="auth-ac-sub">
+          {lang === "ar"
+            ? "المجلة الأكاديمية الرقمية لأبحاث ومشاريع طلبة كلية الهندسة المعلوماتية."
+            : "The digital academic journal for research and projects of the Informatics Engineering faculty."}
+        </p>
+      </div>
 
-  const [lang, setLang]       = useState("ar");
-  const isAr = lang === "ar";
-  const texts = isAr ? Ara : Eng;
+      <div className="auth-ac-stats">
+        <div className="auth-ac-stat">
+          <div className="auth-ac-n">1,240</div>
+          <div className="auth-ac-l">{lang === "ar" ? "بحث" : "Papers"}</div>
+        </div>
+        <div className="auth-ac-stat">
+          <div className="auth-ac-n">380</div>
+          <div className="auth-ac-l">{lang === "ar" ? "باحث" : "Researchers"}</div>
+        </div>
+        <div className="auth-ac-stat">
+          <div className="auth-ac-n">96%</div>
+          <div className="auth-ac-l">{lang === "ar" ? "نزاهة" : "Integrity"}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-  const [activeTab, setActiveTab] = useState("login");
+// ─── Shared UI ────────────────────────────────────────────────────────────────
+function ErrorBox({ message }) {
+  if (!message) return null;
+  return <div className="auth-error">{message}</div>;
+}
 
-  const [loginEmail,   setLoginEmail]   = useState("");
-  const [loginPw,      setLoginPw]      = useState("");
-  const [showLoginPw,  setShowLoginPw]  = useState(false);
-  const [loginLoading, setLoginLoading] = useState(false);
-  const [loginError,   setLoginError]   = useState("");
+function SuccessBox({ message }) {
+  if (!message) return null;
+  return <div className="auth-success">{message}</div>;
+}
 
-  const [firstName,   setFirstName]   = useState("");
-  const [lastName,    setLastName]    = useState("");
-  const [regEmail,    setRegEmail]    = useState("");
-  const [regPw,       setRegPw]       = useState("");
-  const [regPw2,      setRegPw2]      = useState("");
-  const [showRegPw,   setShowRegPw]   = useState(false);
-  const [showRegPw2,  setShowRegPw2]  = useState(false);
-  const [pwStrength,  setPwStrength]  = useState(0);
-  const [pwMismatch,  setPwMismatch]  = useState(false);
-  const [regLoading,  setRegLoading]  = useState(false);
-  const [regError,    setRegError]    = useState("");
-  const [regSuccess,  setRegSuccess]  = useState(false);
+function Button({ children, onClick, loading, variant = "primary" }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={loading}
+      className={`auth-btn${variant === "ghost" ? " auth-btn-ghost" : ""}`}
+    >
+      {loading ? "جاري التحميل..." : children}
+      {!loading && <span className="barr">←</span>}
+    </button>
+  );
+}
 
-  const [showForgot,      setShowForgot]      = useState(false);
-  const [forgotEmail,     setForgotEmail]     = useState("");
-  const [forgotLoading,   setForgotLoading]   = useState(false);
-  const [forgotSuccess,   setForgotSuccess]   = useState(false);
-  const [forgotError,     setForgotError]     = useState("");
+// Input with icon on the left (visual left = inner-end in RTL)
+function InputBox({ icon, label, type = "text", value, onChange, placeholder, autoComplete, extra }) {
+  return (
+    <div className="auth-field">
+      {label && <label className="auth-label">{label}</label>}
+      <div className="auth-input-box">
+        {icon && <span className="auth-input-icon">{icon}</span>}
+        <input
+          type={type}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          autoComplete={autoComplete}
+          className="auth-input"
+        />
+        {extra}
+      </div>
+    </div>
+  );
+}
 
-  function handlePwChange(v) {
-    setRegPw(v);
-    setPwStrength(calcStrength(v));
-  }
+// ─── Layout wrapper shared by all steps ───────────────────────────────────────
+function AuthLayout({ lang, setLang, children, step, activeTab, onTabChange, onBack }) {
+  const dir = lang === "ar" ? "rtl" : "ltr";
 
-  function handlePw2Change(v) {
-    setRegPw2(v);
-    setPwMismatch(v.length > 0 && v !== regPw);
-  }
+  // Titles per step
+  const titles = {
+    login:    lang === "ar" ? "مرحباً بعودتك"         : "Welcome back",
+    register: lang === "ar" ? "تسجيل طالب جديد"       : "Student Registration",
+    qr:       lang === "ar" ? "إعداد المصادقة الثنائية" : "Set up 2FA",
+    otp:      lang === "ar" ? "رمز التحقق"             : "Verification Code",
+    done:     lang === "ar" ? "تم تسجيل الدخول"        : "Signed In",
+  };
 
-  function switchTab(tab) {
-    setActiveTab(tab);
-    setLoginError("");
-    setRegError("");
-    clearError();
-  }
+  const subs = {
+    login:    lang === "ar" ? "أدخل بياناتك للوصول إلى حسابك." : "Enter your credentials to access your account.",
+    register: lang === "ar" ? "أدخل بياناتك الجامعية للانضمام إلى ASPU Insight." : "Enter your university details to join ASPU Insight.",
+    qr:       lang === "ar" ? "امسح رمز QR باستخدام Google Authenticator أو أي تطبيق TOTP" : "Scan the QR code using Google Authenticator or any TOTP app.",
+    otp:      lang === "ar" ? "أدخل الرمز المكوّن من 6 أرقام من تطبيق المصادقة" : "Enter the 6-digit code from your authenticator app.",
+    done:     "",
+  };
 
-  async function handleLogin(e) {
-    e.preventDefault();
-    setLoginError("");
-    setLoginLoading(true);
-    try {
-      const data = await login(loginEmail, loginPw);
-
-      if (data.requires_2fa === false) {
-        navigate("/setup-2fa", {
-          state: { lang, from },
-          replace: true,
-        });
-      } else {
-        navigate("/verify-otp", {
-          state: { lang, from },
-          replace: true,
-        });
-      }
-    } catch (err) {
-      const data = err.response?.data;
-      const msg = data
-        ? Object.values(data).flat().join(" ")
-        : (isAr ? "فشل تسجيل الدخول. تحقق من بياناتك." : "Login failed. Check your credentials.");
-      setLoginError(msg);
-    } finally {
-      setLoginLoading(false);
-    }
-  }
-
-  async function handleRegister(e) {
-    e.preventDefault();
-    if (regPw !== regPw2) { setPwMismatch(true); return; }
-    setRegError("");
-    setRegLoading(true);
-    try {
-      await apiRegister({
-        full_name: `${firstName} ${lastName}`.trim(),
-        email: regEmail,
-        password: regPw,
-        password2: regPw2,
-        role: "author",
-      });
-      setRegSuccess(true);
-    } catch (err) {
-      const data = err.response?.data;
-      const msg = data
-        ? Object.values(data).flat().join(" ")
-        : (isAr ? "فشل إنشاء الحساب. حاول مرة أخرى." : "Registration failed. Please try again.");
-      setRegError(msg);
-    } finally {
-      setRegLoading(false);
-    }
-  }
-
-  async function handleForgot(e) {
-    e.preventDefault();
-    setForgotError("");
-    setForgotLoading(true);
-    try {
-      await requestPasswordReset(forgotEmail);
-      setForgotSuccess(true);
-    } catch {
-      setForgotError(isAr ? "حدث خطأ. حاول مرة أخرى." : "Something went wrong. Try again.");
-    } finally {
-      setForgotLoading(false);
-    }
-  }
-
-  const barCls = ["", "w", "w", "f", "s"];
-  function pwBarClass(idx) {
-    const cls = "pwb";
-    if (pwStrength === 0 || idx >= pwStrength) return cls;
-    return cls + " " + barCls[pwStrength];
-  }
+  const showTabs = step === "login" || step === "register";
 
   return (
-    <div data-lang={lang} dir={isAr ? "rtl" : "ltr"}>
-      <div className="bc bc1" />
-      <div className="bc bc2" />
+    <div className="auth-root" dir={dir}>
+      <TopBar lang={lang} setLang={setLang} />
 
-      <header className="topbar">
-        <a href="/" className="tb-logo">
-          <Logo />
-          <div>
-            <div className="tb-ln">ASPU Insight</div>
-            <div className="tb-ls">{texts.shared.secondaryLogoTagline}</div>
-          </div>
-        </a>
-        <div className="tb-r">
-          <div className="pill">
-            <button className={"pb" + (lang === "ar" ? " on" : "")} onClick={() => setLang("ar")}>ع</button>
-            <button className={"pb" + (lang === "en" ? " on" : "")} onClick={() => setLang("en")}>EN</button>
-          </div>
-        </div>
-      </header>
+      <main className="auth-page">
+        <div className="auth-container">
 
-      <main className="page">
-        <div className="container">
+          {/* Form panel — LEFT in RTL layout (first in DOM = right side visually because of RTL grid) */}
+          {/* Actually: in RTL, first column renders on the right. We want form on the left visually.
+              So we put AccentPanel first in DOM (renders right) and form second (renders left). */}
+          <AccentPanel lang={lang} />
 
-          <div className="accent">
-            <div className="ac-grid" />
-            <div className="ac-ring" style={{ width: 380, height: 380, top: -120, right: -100 }} />
-            <div className="ac-ring" style={{ width: 180, height: 180, bottom: 70, left: -50 }} />
-            <div className="ac-ring" style={{ width: 80, height: 80, bottom: 30, right: 50, borderColor: "rgba(0,0,0,.06)" }} />
-            <div className="ac-top">
-              <div className="ac-eyebrow">
-                <div className="ac-dot" />
-                <span className="ar">جامعة الشام الخاصة</span>
-                <span className="en">Al-Sham Private University</span>
-              </div>
-              <div className="ac-big">ASPU<br /><span className="dim">INSIGHT</span></div>
-              <p className="ac-sub ar">المجلة الأكاديمية الرقمية لأبحاث ومشاريع طلبة كلية الهندسة المعلوماتية.</p>
-              <p className="ac-sub en">The digital academic journal for research and projects of the Informatics Engineering faculty.</p>
-            </div>
-            <div className="ac-stats">
-              <div className="ac-stat"><div className="ac-n">1,240</div><div className="ac-l ar">بحث</div><div className="ac-l en">Papers</div></div>
-              <div className="ac-stat"><div className="ac-n">380</div><div className="ac-l ar">باحث</div><div className="ac-l en">Researchers</div></div>
-              <div className="ac-stat"><div className="ac-n">96%</div><div className="ac-l ar">نزاهة</div><div className="ac-l en">Integrity</div></div>
-            </div>
-          </div>
+          <div className="auth-form-panel">
+            {/* Back to home */}
+            <a href="/" className="auth-back">
+              {lang === "ar" ? "› العودة للرئيسية" : "› Back to Home"}
+            </a>
 
-          <div className="form-panel">
-            <a href="/" className="back"><BackArrow /><span className="ar">العودة للرئيسية</span><span className="en">Back to Home</span></a>
-
-            <div className="tabs">
-              <button className={"tab" + (activeTab === "login" ? " on" : "")} onClick={() => switchTab("login")}>
-                <span className="ar">تسجيل الدخول</span><span className="en">Log In</span>
-              </button>
-              <button className={"tab" + (activeTab === "register" ? " on" : "")} onClick={() => switchTab("register")}>
-                <span className="ar">حساب جديد</span><span className="en">Register</span>
-              </button>
-            </div>
-
-            {activeTab === "login" && !showForgot && (
-              <div className="panel">
-                <div className="fh">
-                  <h2 className="ftitle ar">مرحباً بعودتك</h2>
-                  <h2 className="ftitle en">Welcome back</h2>
-                  <p className="fsub ar">أدخل بياناتك للوصول إلى حسابك.</p>
-                  <p className="fsub en">Enter your credentials to access your account.</p>
-                </div>
-
-                {(loginError || authError) && (
-                  <div className="ferr-box">{loginError || authError}</div>
-                )}
-
-                <form className="fields" onSubmit={handleLogin}>
-                  <div className="field">
-                    <label className="flabel ar">البريد الإلكتروني</label>
-                    <label className="flabel en">Email Address</label>
-                    <div className="fbox">
-                      <span className="fico">✉</span>
-                      <input className="finp" type="email" required
-                        placeholder={isAr ? "بريدك الإلكتروني" : "Your email address"}
-                        value={loginEmail} onChange={e => setLoginEmail(e.target.value)} />
-                    </div>
-                  </div>
-
-                  <div className="field">
-                    <label className="flabel ar">كلمة المرور</label>
-                    <label className="flabel en">Password</label>
-                    <div className="fbox">
-                      <span className="fico">🔑</span>
-                      <input className="finp" type={showLoginPw ? "text" : "password"} required
-                        placeholder={isAr ? "كلمة المرور" : "Password"}
-                        value={loginPw} onChange={e => setLoginPw(e.target.value)} />
-                      <button type="button" className="feye" tabIndex={-1} onClick={() => setShowLoginPw(v => !v)}>
-                        {showLoginPw ? <EyeOff /> : <EyeOn />}
-                      </button>
-                    </div>
-                    <a href="#" style={{ fontSize: 11, color: "var(--tx3)", textDecoration: "none", alignSelf: "flex-end" }}
-                      onClick={e => { e.preventDefault(); setShowForgot(true); setForgotSuccess(false); setForgotError(""); }}>
-                      <span className="ar">نسيت كلمة المرور؟</span>
-                      <span className="en">Forgot password?</span>
-                    </a>
-                  </div>
-
-                  <button type="submit" className="btn" disabled={loginLoading}>
-                    {loginLoading
-                      ? <><span className="ar">جارٍ التحقق...</span><span className="en">Verifying...</span></>
-                      : <><span className="ar">دخول</span><span className="en">Sign In</span><span className="barr">→</span></>}
-                  </button>
-                </form>
-
-                <div className="fswitch">
-                  <span className="ar">طالب جديد؟ <a href="#" onClick={e => { e.preventDefault(); switchTab("register"); }}>أنشئ حسابك</a></span>
-                  <span className="en">New student? <a href="#" onClick={e => { e.preventDefault(); switchTab("register"); }}>Create account</a></span>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "login" && showForgot && (
-              <div className="panel">
-                <div className="fh">
-                  <h2 className="ftitle ar">إعادة تعيين كلمة المرور</h2>
-                  <h2 className="ftitle en">Reset Password</h2>
-                  <p className="fsub ar">أدخل بريدك وسنرسل لك رابط الاسترداد.</p>
-                  <p className="fsub en">Enter your email and we'll send a reset link.</p>
-                </div>
-
-                {forgotError && <div className="ferr-box">{forgotError}</div>}
-
-                {forgotSuccess ? (
-                  <div className="success show" style={{ padding: "20px 0" }}>
-                    <div className="sring">✓</div>
-                    <p className="ar" style={{ textAlign: "center", color: "var(--tx2)" }}>تم الإرسال! تحقق من بريدك الإلكتروني.</p>
-                    <p className="en" style={{ textAlign: "center", color: "var(--tx2)" }}>Sent! Check your inbox.</p>
-                  </div>
-                ) : (
-                  <form className="fields" onSubmit={handleForgot}>
-                    <div className="field">
-                      <label className="flabel ar">البريد الإلكتروني</label>
-                      <label className="flabel en">Email Address</label>
-                      <div className="fbox">
-                        <span className="fico">✉</span>
-                        <input className="finp" type="email" required
-                          placeholder={isAr ? "بريدك الإلكتروني" : "Your email"}
-                          value={forgotEmail} onChange={e => setForgotEmail(e.target.value)} />
-                      </div>
-                    </div>
-                    <button type="submit" className="btn" disabled={forgotLoading}>
-                      {forgotLoading
-                        ? <><span className="ar">جارٍ الإرسال...</span><span className="en">Sending...</span></>
-                        : <><span className="ar">إرسال رابط الاسترداد</span><span className="en">Send Reset Link</span><span className="barr">→</span></>}
-                    </button>
-                  </form>
-                )}
-
-                <div className="fswitch">
-                  <a href="#" onClick={e => { e.preventDefault(); setShowForgot(false); }}>
-                    <span className="ar">← العودة لتسجيل الدخول</span>
-                    <span className="en">← Back to login</span>
-                  </a>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "register" && !regSuccess && (
-              <div className="panel">
-                <div className="fh">
-                  <h2 className="ftitle ar">تسجيل مستخدم جديد</h2>
-                  <h2 className="ftitle en">Create Account</h2>
-                  <p className="fsub ar">أدخل بياناتك للانضمام إلى ASPU Insight.</p>
-                  <p className="fsub en">Enter your details to join ASPU Insight.</p>
-                </div>
-
-                {regError && <div className="ferr-box">{regError}</div>}
-
-                <form className="fields" onSubmit={handleRegister}>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-                    <div className="field">
-                      <label className="flabel ar">الاسم الأول</label>
-                      <label className="flabel en">First Name</label>
-                      <div className="fbox">
-                        <input className="finp" type="text" required style={{ paddingInlineStart: 13 }}
-                          placeholder={isAr ? "سارة" : "Sara"}
-                          value={firstName} onChange={e => setFirstName(e.target.value)} />
-                      </div>
-                    </div>
-                    <div className="field">
-                      <label className="flabel ar">الاسم الأخير</label>
-                      <label className="flabel en">Last Name</label>
-                      <div className="fbox">
-                        <input className="finp" type="text" required style={{ paddingInlineStart: 13 }}
-                          placeholder={isAr ? "الأحمد" : "Ahmad"}
-                          value={lastName} onChange={e => setLastName(e.target.value)} />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="field">
-                    <label className="flabel ar">البريد الإلكتروني</label>
-                    <label className="flabel en">Email Address</label>
-                    <div className="fbox">
-                      <span className="fico">✉</span>
-                      <input className="finp" type="email" required
-                        placeholder={isAr ? "بريدك الإلكتروني" : "Your email address"}
-                        value={regEmail} onChange={e => setRegEmail(e.target.value)} />
-                    </div>
-                  </div>
-
-                  <div className="field">
-                    <label className="flabel ar">كلمة المرور</label>
-                    <label className="flabel en">Password</label>
-                    <div className="fbox">
-                      <span className="fico">🔑</span>
-                      <input className="finp" type={showRegPw ? "text" : "password"} required
-                        placeholder={isAr ? "8 أحرف على الأقل" : "At least 8 characters"}
-                        value={regPw} onChange={e => handlePwChange(e.target.value)} />
-                      <button type="button" className="feye" tabIndex={-1} onClick={() => setShowRegPw(v => !v)}>
-                        {showRegPw ? <EyeOff /> : <EyeOn />}
-                      </button>
-                    </div>
-                    <div className="pwbars">{[0,1,2,3].map(i => <div key={i} className={pwBarClass(i)} />)}</div>
-                    <div className="pwhint">
-                      <span className="ar">{STR_LABELS.ar[pwStrength]}</span>
-                      <span className="en">{STR_LABELS.en[pwStrength]}</span>
-                    </div>
-                  </div>
-
-                  <div className="field">
-                    <label className="flabel ar">تأكيد كلمة المرور</label>
-                    <label className="flabel en">Confirm Password</label>
-                    <div className="fbox" style={pwMismatch ? { borderColor: "#C0542A" } : {}}>
-                      <span className="fico">🔑</span>
-                      <input className="finp" type={showRegPw2 ? "text" : "password"} required
-                        placeholder={isAr ? "أعد كلمة المرور" : "Re-enter password"}
-                        value={regPw2} onChange={e => handlePw2Change(e.target.value)} />
-                      <button type="button" className="feye" tabIndex={-1} onClick={() => setShowRegPw2(v => !v)}>
-                        {showRegPw2 ? <EyeOff /> : <EyeOn />}
-                      </button>
-                    </div>
-                    {pwMismatch && (
-                      <span className="ferr" style={{ display: "block" }}>
-                        <span className="ar">كلمتا المرور غير متطابقتين</span>
-                        <span className="en">Passwords do not match</span>
-                      </span>
-                    )}
-                  </div>
-
-                  <button type="submit" className="btn" disabled={regLoading}>
-                    {regLoading
-                      ? <><span className="ar">جارٍ إنشاء الحساب...</span><span className="en">Creating account...</span></>
-                      : <><span className="ar">إنشاء الحساب</span><span className="en">Create Account</span><span className="barr">→</span></>}
-                  </button>
-                </form>
-
-                <div className="fswitch">
-                  <span className="ar">لديك حساب؟ <a href="#" onClick={e => { e.preventDefault(); switchTab("login"); }}>سجّل دخولك</a></span>
-                  <span className="en">Have an account? <a href="#" onClick={e => { e.preventDefault(); switchTab("login"); }}>Sign in</a></span>
-                </div>
-              </div>
-            )}
-
-            {activeTab === "register" && regSuccess && (
-              <div className="success show">
-                <div className="sring">✓</div>
-                <div className="stitle ar">تم إنشاء الحساب!</div>
-                <div className="stitle en">Account Created!</div>
-                <p className="sdesc ar">تم إرسال رابط تأكيد إلى بريدك الإلكتروني. يرجى تأكيد بريدك قبل تسجيل الدخول.</p>
-                <p className="sdesc en">A confirmation link was sent to your email. Please verify before signing in.</p>
-                {/* ✅ التعديل هون: بدل navigate(from) صار يروح لتبويب تسجيل الدخول */}
-                <button className="btn" style={{ maxWidth: 260, marginTop: 6 }}
-                  onClick={() => { setRegSuccess(false); switchTab("login"); }}>
-                  <span className="ar">الذهاب لتسجيل الدخول</span>
-                  <span className="en">Go to Login</span>
-                  <span className="barr">→</span>
+            {/* Tabs */}
+            {showTabs && (
+              <div className="auth-tabs">
+                <button
+                  className={`auth-tab ${activeTab === "login" ? "active" : ""}`}
+                  onClick={() => onTabChange("login")}
+                >
+                  {lang === "ar" ? "تسجيل الدخول" : "Log In"}
+                </button>
+                <button
+                  className={`auth-tab ${activeTab === "register" ? "active" : ""}`}
+                  onClick={() => onTabChange("register")}
+                >
+                  {lang === "ar" ? "حساب جديد" : "Register"}
                 </button>
               </div>
             )}
 
+            {/* Heading */}
+            <div className="auth-fh auth-panel">
+              <h2 className="auth-ftitle">{titles[step]}</h2>
+              {subs[step] && <p className="auth-fsub">{subs[step]}</p>}
+            </div>
+
+            {/* Page content */}
+            <div className="auth-panel">
+              {children}
+            </div>
           </div>
+
         </div>
       </main>
     </div>
   );
+}
+
+// ─── Step: Register ───────────────────────────────────────────────────────────
+function RegisterPage({ lang, onGoToLogin }) {
+  const [form, setForm] = useState({
+    full_name: "",
+    email: "",
+    password: "",
+    password2: "",
+    role: "author",
+    institution: "",
+    bio: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [showPw2, setShowPw2] = useState(false);
+
+  const t = {
+    fullName:     lang === "ar" ? "الاسم الكامل *"         : "Full Name *",
+    email:        lang === "ar" ? "البريد الإلكتروني *"     : "Email *",
+    role:         lang === "ar" ? "الدور"                   : "Role",
+    institution:  lang === "ar" ? "المؤسسة / الجامعة"       : "Institution / University",
+    bio:          lang === "ar" ? "نبذة شخصية"              : "Short Bio",
+    password:     lang === "ar" ? "كلمة المرور *"           : "Password *",
+    confirm:      lang === "ar" ? "تأكيد كلمة المرور *"     : "Confirm Password *",
+    create:       lang === "ar" ? "إنشاء الحساب"            : "Create Account",
+    haveAccount:  lang === "ar" ? "لديك حساب بالفعل؟"       : "Already have an account?",
+    signIn:       lang === "ar" ? "تسجيل الدخول"            : "Sign in",
+    namePh:       lang === "ar" ? "أدخل اسمك الكامل"        : "Enter your full name",
+    emailPh:      lang === "ar" ? "example@email.com"       : "example@email.com",
+    instPh:       lang === "ar" ? "مثال: جامعة ASPU"        : "e.g. ASPU University",
+    bioPh:        lang === "ar" ? "اكتب نبذة مختصرة عنك..." : "Write a short bio...",
+    pwPh:         lang === "ar" ? "أدخل كلمة المرور"        : "Enter password",
+    pw2Ph:        lang === "ar" ? "أعد إدخال كلمة المرور"   : "Re-enter password",
+    authorOpt:    lang === "ar" ? "كاتب (Author)"           : "Author",
+    reviewerOpt:  lang === "ar" ? "مراجع (Reviewer)"        : "Reviewer",
+    editorOpt:    lang === "ar" ? "محرر (Editor)"           : "Editor",
+    errFields:    lang === "ar" ? "يرجى تعبئة جميع الحقول المطلوبة." : "Please fill all required fields.",
+    errMatch:     lang === "ar" ? "كلمتا المرور غير متطابقتين."      : "Passwords do not match.",
+    errGeneral:   lang === "ar" ? "حدث خطأ أثناء إنشاء الحساب."     : "An error occurred.",
+    successMsg:   lang === "ar" ? "تم إنشاء الحساب بنجاح! سيتم توجيهك لتسجيل الدخول..." : "Account created! Redirecting to login...",
+  };
+
+  const set = (key) => (val) => setForm((f) => ({ ...f, [key]: val }));
+
+  const handleSubmit = async () => {
+    setError("");
+    if (!form.full_name || !form.email || !form.password) { setError(t.errFields); return; }
+    if (form.password !== form.password2) { setError(t.errMatch); return; }
+    try {
+      setLoading(true);
+      const data = await register({
+        full_name: form.full_name, email: form.email,
+        password: form.password, password2: form.password2,
+        role: form.role, institution: form.institution, bio: form.bio,
+      });
+      setSuccess(data.message || t.successMsg);
+      setTimeout(() => onGoToLogin(form.email), 2000);
+    } catch (e) {
+      const msg = e?.response?.data;
+      if (typeof msg === "object") {
+        const firstKey = Object.keys(msg)[0];
+        const firstVal = Array.isArray(msg[firstKey]) ? msg[firstKey][0] : msg[firstKey];
+        setError(typeof firstVal === "string" ? `${firstKey}: ${firstVal}` : t.errGeneral);
+      } else {
+        setError(t.errGeneral);
+      }
+    } finally { setLoading(false); }
+  };
+
+  const EyeBtn = ({ show, onToggle }) => (
+    <button type="button" className="auth-input-icon" onClick={onToggle}
+      style={{ cursor: "pointer", background: "none", border: "none", padding: "0 12px" }}>
+      {show
+        ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+        : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      }
+    </button>
+  );
+
+  return (
+    <div className="auth-fields">
+      <ErrorBox message={error} />
+      <SuccessBox message={success} />
+
+      <InputBox icon="👤" label={t.fullName} value={form.full_name} onChange={set("full_name")} placeholder={t.namePh} />
+      <InputBox icon="✉" label={t.email} type="email" value={form.email} onChange={set("email")} placeholder={t.emailPh} autoComplete="email" />
+
+      <div className="auth-field">
+        <label className="auth-label">{t.role}</label>
+        <select value={form.role} onChange={(e) => set("role")(e.target.value)} className="auth-select">
+          <option value="author">{t.authorOpt}</option>
+          <option value="reviewer">{t.reviewerOpt}</option>
+          <option value="editor">{t.editorOpt}</option>
+        </select>
+      </div>
+
+      <InputBox icon="🏛" label={t.institution} value={form.institution} onChange={set("institution")} placeholder={t.instPh} />
+
+      <div className="auth-field">
+        <label className="auth-label">{t.bio}</label>
+        <textarea value={form.bio} onChange={(e) => set("bio")(e.target.value)}
+          placeholder={t.bioPh} rows={3} className="auth-textarea" />
+      </div>
+
+      <InputBox icon="🔑" label={t.password} type={showPw ? "text" : "password"}
+        value={form.password} onChange={set("password")} placeholder={t.pwPh}
+        autoComplete="new-password"
+        extra={<EyeBtn show={showPw} onToggle={() => setShowPw(p => !p)} />} />
+
+      <InputBox icon="🔑" label={t.confirm} type={showPw2 ? "text" : "password"}
+        value={form.password2} onChange={set("password2")} placeholder={t.pw2Ph}
+        autoComplete="new-password"
+        extra={<EyeBtn show={showPw2} onToggle={() => setShowPw2(p => !p)} />} />
+
+      <Button onClick={handleSubmit} loading={loading}>{t.create}</Button>
+
+      <p className="auth-switch">
+        {t.haveAccount}{" "}
+        <span className="auth-switch-link" onClick={() => onGoToLogin("")}>{t.signIn}</span>
+      </p>
+    </div>
+  );
+}
+
+// ─── Step: Login ──────────────────────────────────────────────────────────────
+function LoginPage({ lang, prefillEmail, onQRRequired, onOTPRequired, onGoToRegister }) {
+  const [email, setEmail] = useState(prefillEmail || "");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [showPw, setShowPw] = useState(false);
+
+  const t = {
+    email:      lang === "ar" ? "البريد الإلكتروني" : "Email Address",
+    password:   lang === "ar" ? "كلمة المرور"        : "Password",
+    forgot:     lang === "ar" ? "نسيت كلمة المرور؟"  : "Forgot password?",
+    submit:     lang === "ar" ? "دخول"               : "Sign In",
+    noAccount:  lang === "ar" ? "طالب جديد؟"         : "New student?",
+    createAcc:  lang === "ar" ? "أنشئ حسابك"         : "Create account",
+    errEmpty:   lang === "ar" ? "يرجى إدخال البريد الإلكتروني وكلمة المرور." : "Please enter your email and password.",
+    errCreds:   lang === "ar" ? "بيانات الدخول غير صحيحة." : "Invalid credentials.",
+    emailPh:    "example@email.com",
+    pwPh:       lang === "ar" ? "كلمة المرور" : "Password",
+  };
+
+  const handleSubmit = async () => {
+    setError("");
+    if (!email || !password) { setError(t.errEmpty); return; }
+    try {
+      setLoading(true);
+      const data = await login(email, password);
+      if (data.requires_2fa === false) { onQRRequired(); }
+      else { onOTPRequired(); }
+    } catch (e) {
+      const msg = e?.response?.data;
+      if (typeof msg === "object") {
+        const first = Object.values(msg).flat()[0];
+        setError(typeof first === "string" ? first : t.errCreds);
+      } else { setError(t.errCreds); }
+    } finally { setLoading(false); }
+  };
+
+  const EyeBtn = () => (
+    <button type="button" className="auth-input-icon" onClick={() => setShowPw(p => !p)}
+      style={{ cursor: "pointer", background: "none", border: "none", padding: "0 12px" }}>
+      {showPw
+        ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+        : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      }
+    </button>
+  );
+
+  return (
+    <div className="auth-fields">
+      <ErrorBox message={error} />
+      <InputBox icon="✉" label={t.email} type="email" value={email} onChange={setEmail}
+        placeholder={t.emailPh} autoComplete="email" />
+      <div className="auth-field">
+        <label className="auth-label">{t.password}</label>
+        <div className="auth-input-box">
+          <span className="auth-input-icon">🔑</span>
+          <input type={showPw ? "text" : "password"} value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder={t.pwPh} autoComplete="current-password" className="auth-input" />
+          <EyeBtn />
+        </div>
+        <button className="auth-forgot">{t.forgot}</button>
+      </div>
+      <Button onClick={handleSubmit} loading={loading}>{t.submit}</Button>
+      <p className="auth-switch">
+        {t.noAccount}{" "}
+        <span className="auth-switch-link" onClick={onGoToRegister}>{t.createAcc}</span>
+      </p>
+    </div>
+  );
+}
+
+// ─── Step: QR ─────────────────────────────────────────────────────────────────
+function QRPage({ lang, onNext }) {
+  const [qrUrl, setQrUrl] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const calledRef = useRef(false);
+
+  useEffect(() => {
+    if (calledRef.current) return;
+    calledRef.current = true;
+    enable2FA()
+      .then((data) => setQrUrl(data.qr_code_url))
+      .catch(() => setError(lang === "ar" ? "تعذّر تحميل رمز QR." : "Failed to load QR code."))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const steps = lang === "ar"
+    ? ["افتح تطبيق Google Authenticator", "اضغط على (+) لإضافة حساب جديد", "امسح رمز QR أعلاه"]
+    : ["Open Google Authenticator", "Tap (+) to add a new account", "Scan the QR code above"];
+
+  return (
+    <>
+      <ErrorBox message={error} />
+      <div className="auth-qr-wrapper">
+        {loading
+          ? <div className="auth-qr-placeholder">⏳ {lang === "ar" ? "جاري تحميل رمز QR..." : "Loading QR..."}</div>
+          : qrUrl ? <div className="auth-qr-box"><QRCodeSVG value={qrUrl} size={200} /></div> : null}
+        <div className="auth-qr-steps">
+          {steps.map((s, i) => (
+            <div key={i} className="auth-qr-step">
+              <span className="auth-qr-step-num">{i + 1}.</span>
+              <span>{s}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <Button onClick={onNext}>
+        {lang === "ar" ? "تم المسح ← أدخل رمز التحقق" : "Scanned → Enter Code"}
+      </Button>
+    </>
+  );
+}
+
+// ─── Step: OTP ────────────────────────────────────────────────────────────────
+function OTPPage({ lang, onSuccess }) {
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleChange = (index, value) => {
+    if (!/^\d?$/.test(value)) return;
+    const next = [...otp]; next[index] = value; setOtp(next);
+    if (value && index < 5) document.getElementById(`otp-${index + 1}`)?.focus();
+  };
+
+  const handleKeyDown = (index, e) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0)
+      document.getElementById(`otp-${index - 1}`)?.focus();
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    const next = [...otp];
+    pasted.split("").forEach((ch, i) => { next[i] = ch; });
+    setOtp(next);
+    document.getElementById(`otp-${Math.min(pasted.length, 5)}`)?.focus();
+  };
+
+  const handleVerify = async () => {
+    const code = otp.join("");
+    if (code.length < 6) { setError(lang === "ar" ? "يرجى إدخال رمز التحقق المكوّن من 6 أرقام." : "Please enter the 6-digit code."); return; }
+    setError("");
+    try {
+      setLoading(true);
+      const data = await confirm2FA(code);
+      onSuccess(data);
+    } catch (e) {
+      const msg = e?.response?.data;
+      if (typeof msg === "object") {
+        const first = Object.values(msg).flat()[0];
+        setError(typeof first === "string" ? first : (lang === "ar" ? "رمز التحقق غير صحيح." : "Invalid code."));
+      } else { setError(lang === "ar" ? "رمز التحقق غير صحيح أو منتهي الصلاحية." : "Invalid or expired code."); }
+    } finally { setLoading(false); }
+  };
+
+  return (
+    <>
+      <ErrorBox message={error} />
+      <div className="auth-otp-row" onPaste={handlePaste}>
+        {otp.map((digit, i) => (
+          <input key={i} id={`otp-${i}`} type="text" inputMode="numeric" maxLength={1}
+            value={digit}
+            onChange={(e) => handleChange(i, e.target.value)}
+            onKeyDown={(e) => handleKeyDown(i, e)}
+            className={`auth-otp-box${digit ? " filled" : ""}`} />
+        ))}
+      </div>
+      <p className="auth-otp-hint">
+        {lang === "ar" ? "الرمز يتجدد كل 30 ثانية من تطبيق المصادقة" : "Code refreshes every 30 seconds."}
+      </p>
+      <Button onClick={handleVerify} loading={loading}>
+        {lang === "ar" ? "تحقق والدخول" : "Verify & Sign In"}
+      </Button>
+    </>
+  );
+}
+
+// ─── Main Controller ──────────────────────────────────────────────────────────
+export default function Auth() {
+  const [step, setStep] = useState("login");
+  const [prefillEmail, setPrefillEmail] = useState("");
+  const [lang, setLang] = useState("ar");
+
+  const goToLogin = (email) => { setPrefillEmail(email); setStep("login"); };
+  const onSuccess = (data) => { setStep("done"); console.log("✅ logged in:", data); };
+
+  const sharedLayout = (content) => (
+    <AuthLayout
+      lang={lang} setLang={setLang}
+      step={step}
+      activeTab={step === "register" ? "register" : "login"}
+      onTabChange={(t) => setStep(t)}
+    >
+      {content}
+    </AuthLayout>
+  );
+
+  if (step === "login") return sharedLayout(
+    <LoginPage lang={lang} prefillEmail={prefillEmail}
+      onQRRequired={() => setStep("qr")}
+      onOTPRequired={() => setStep("otp")}
+      onGoToRegister={() => setStep("register")} />
+  );
+
+  if (step === "register") return sharedLayout(
+    <RegisterPage lang={lang} onGoToLogin={goToLogin} />
+  );
+
+  if (step === "qr") return sharedLayout(
+    <QRPage lang={lang} onNext={() => setStep("otp")} />
+  );
+
+  if (step === "otp") return sharedLayout(
+    <OTPPage lang={lang} onSuccess={onSuccess} />
+  );
+
+  if (step === "done") return sharedLayout(
+    <div className="auth-done">
+      <div className="auth-done-ring">✓</div>
+      <p className="auth-done-title">{lang === "ar" ? "أهلاً بك في ASPU Insight" : "Welcome to ASPU Insight"}</p>
+      <p className="auth-done-desc">{lang === "ar" ? "يمكنك الآن الوصول إلى جميع ميزات المنصة." : "You can now access all platform features."}</p>
+    </div>
+  );
+
+  return null;
 }
