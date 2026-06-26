@@ -1,6 +1,8 @@
-import { Ara, Eng } from '../i18n';
+import { useTranslation } from 'react-i18next';
 import "../styling/Footer.css"
 export default function Footer({ isAr, footer, Logo }) {
+  const { t } = useTranslation();
+  const shared = t('shared', { returnObjects: true });
   return (
     <footer className="aspu-footer">
       <div className="aspu-ft-grid">
@@ -10,7 +12,8 @@ export default function Footer({ isAr, footer, Logo }) {
             <div>
               <div className="aspu-logo-n">ASPU Insight</div>
               <div className="aspu-logo-s">
-                {(isAr ? Ara : Eng).shared.logoTagline}              </div>
+                {shared.logoTagline}
+              </div>
             </div>
           </div>
           <p>{footer.brand}</p>

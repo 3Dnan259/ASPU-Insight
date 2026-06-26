@@ -1,22 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { MagnifyingGlass, Archive, ShieldCheck, GitPullRequest, Translate, ChartLineUp } from "@phosphor-icons/react";
-import { useTranslation, initReactI18next } from "react-i18next";
-import i18n from "i18next";
-import { resources } from "../i18n";
+import { useTranslation } from "react-i18next";
 import '../styling/Home.css'
 import { RESEARCH_CARDS, GALLERY_IMAGES } from '../MokData/Data.js';
 import Navbar from '../components/Navbar.jsx';
 import Footer from '../components/Footer.jsx'
 import Logo from '../components/Logo.jsx'
 
-if (!i18n.isInitialized) {
-  i18n.use(initReactI18next).init({
-    resources,
-    lng: "ar",
-    fallbackLng: "ar",
-    interpolation: { escapeValue: false },
-  });
-}
 
 // ══ ANIMATED COUNTER ══
 function useCounter(target, suffix, inView) {
@@ -268,8 +258,6 @@ function ScrollHijack({ isAr, t }) {
 
 // ══ MAIN COMPONENT ══
 export default function ASPUInsight() {
-  const [theme, setThemeState] = useState("light");
-  const [lang, setLangState] = useState("ar");
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [hoveredMenu, setHoveredMenu] = useState(null);
@@ -278,24 +266,19 @@ export default function ASPUInsight() {
 
   const { t, i18n: i18nInst } = useTranslation();
   const cursorRef = useRef(null);
+  const lang = i18nInst.language || "ar";
   const isAr = lang === "ar";
 
-  const setTheme = useCallback((th) => {
-    setThemeState(th);
-    document.documentElement.setAttribute("data-theme", th);
-  }, []);
-
   const setLang = useCallback((l) => {
-    setLangState(l);
     i18nInst.changeLanguage(l);
     document.documentElement.setAttribute("dir", l === "ar" ? "rtl" : "ltr");
     document.documentElement.setAttribute("lang", l);
   }, [i18nInst]);
 
   useEffect(() => {
-    setTheme("light");
-    setLang("ar");
-  }, []);
+    document.documentElement.setAttribute("dir", isAr ? "rtl" : "ltr");
+    document.documentElement.setAttribute("lang", lang);
+  }, [lang, isAr]);
 
   useEffect(() => {
     const h = () => setScrolled(window.scrollY > 20);
@@ -370,7 +353,6 @@ export default function ASPUInsight() {
   return (
     <div
       className={`aspu-root${menuOpen ? " menu-is-open" : ""}`}
-      data-theme={theme}
       data-lang={lang}
     >
       {/* Noise overlay */}
@@ -382,7 +364,6 @@ export default function ASPUInsight() {
       {/* ══ NAVBAR (nav + fullscreen menu) ══ */}
       <Navbar
         menuOpen={menuOpen} setMenuOpen={setMenuOpen}
-        theme={theme} setTheme={setTheme}
         lang={lang} setLang={setLang}
         hoveredMenu={hoveredMenu} setHoveredMenu={setHoveredMenu}
         scrolled={scrolled}

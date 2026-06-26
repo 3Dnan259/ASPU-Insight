@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import "../styling/Profile.css";
-import { updateProfile, changePassword } from "../api/Auth";
+import { updateProfile, changePassword } from "../api/auth";
 import api from "../api/client";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import Logo from "../components/Logo";
-import { Ara, Eng } from "../i18n";
 
 /* ══ ACTIVITY GRID ══ */
 function generateActivityGrid() {
@@ -41,14 +41,14 @@ function ProfileSkeleton() {
 }
 
 /* ══ ERROR STATE ══ */
-function ProfileError({ message, onRetry, L }) {
+function ProfileError({ message, onRetry, t }) {
     return (
         <div className="empty-state" style={{ marginTop: 120 }}>
             <div className="empty-state-ico">⚠️</div>
-            <div className="empty-state-t">{L("حدث خطأ أثناء تحميل البروفايل", "Failed to load profile")}</div>
+            <div className="empty-state-t">{t("profile.error.loadFailed")}</div>
             <div className="empty-state-s">{message}</div>
             <button onClick={onRetry} style={{ marginTop: 16, padding: "8px 20px", border: "1px solid var(--ac)", color: "var(--ac)", background: "transparent", borderRadius: 4, cursor: "pointer", fontSize: 13, fontFamily: "inherit" }}>
-                {L("إعادة المحاولة", "Retry")}
+                {t("profile.action.retry")}
             </button>
         </div>
     );
@@ -110,7 +110,7 @@ function EditField({ label, value, onChange, type = "text", placeholder = "" }) 
 }
 
 /* ══ CHANGE PASSWORD MODAL ══ */
-function ChangePasswordModal({ onClose, L }) {
+function ChangePasswordModal({ onClose, t }) {
     const [oldPassword, setOldPassword] = useState("");
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -122,15 +122,15 @@ function ChangePasswordModal({ onClose, L }) {
         setError("");
 
         if (!oldPassword || !newPassword || !confirmPassword) {
-            setError(L("يرجى تعبئة جميع الحقول", "Please fill in all fields"));
+            setError(t("profile.modal.error.emptyFields"));
             return;
         }
         if (newPassword !== confirmPassword) {
-            setError(L("كلمتا المرور الجديدتان غير متطابقتين", "New passwords do not match"));
+            setError(t("profile.modal.error.mismatch"));
             return;
         }
         if (newPassword.length < 8) {
-            setError(L("يجب أن تكون كلمة المرور 8 أحرف على الأقل", "Password must be at least 8 characters"));
+            setError(t("profile.modal.error.shortPassword"));
             return;
         }
 
@@ -144,7 +144,7 @@ function ChangePasswordModal({ onClose, L }) {
             setError(
                 errData
                     ? Object.values(errData).flat().join(" ")
-                    : L("فشل تغيير كلمة المرور. حاول مرة أخرى.", "Failed to change password. Please try again.")
+                    : t("profile.modal.error.submitFailed")
             );
         } finally {
             setLoading(false);
@@ -168,29 +168,29 @@ function ChangePasswordModal({ onClose, L }) {
                 onClick={e => e.stopPropagation()}
             >
                 <div style={{ fontSize: 17, fontWeight: 700, color: "var(--tx1)", marginBottom: 20 }}>
-                    {L("تغيير كلمة المرور", "Change Password")}
+                    {t("profile.modal.title")}
                 </div>
 
                 <EditField
-                    label={L("كلمة المرور الحالية", "Current Password")}
+                    label={t("profile.modal.oldPassword")}
                     type="password"
                     value={oldPassword}
                     onChange={setOldPassword}
-                    placeholder={L("أدخل كلمة المرور الحالية", "Enter current password")}
+                    placeholder={t("profile.modal.oldPasswordPlaceholder")}
                 />
                 <EditField
-                    label={L("كلمة المرور الجديدة", "New Password")}
+                    label={t("profile.modal.newPassword")}
                     type="password"
                     value={newPassword}
                     onChange={setNewPassword}
-                    placeholder={L("أدخل كلمة المرور الجديدة", "Enter new password")}
+                    placeholder={t("profile.modal.newPasswordPlaceholder")}
                 />
                 <EditField
-                    label={L("تأكيد كلمة المرور الجديدة", "Confirm New Password")}
+                    label={t("profile.modal.confirmPassword")}
                     type="password"
                     value={confirmPassword}
                     onChange={setConfirmPassword}
-                    placeholder={L("أعد إدخال كلمة المرور الجديدة", "Re-enter new password")}
+                    placeholder={t("profile.modal.confirmPasswordPlaceholder")}
                 />
 
                 {error && (
@@ -200,7 +200,7 @@ function ChangePasswordModal({ onClose, L }) {
                 )}
                 {success && (
                     <div style={{ fontSize: 12, color: "#2A8A5A", marginBottom: 10, padding: "8px 12px", background: "rgba(42,138,90,0.08)", borderRadius: 6 }}>
-                        {L("✓ تم تغيير كلمة المرور بنجاح", "✓ Password changed successfully")}
+                        {t("profile.modal.success")}
                     </div>
                 )}
 
@@ -216,7 +216,7 @@ function ChangePasswordModal({ onClose, L }) {
                             opacity: loading ? 0.7 : 1, transition: "opacity 0.2s",
                         }}
                     >
-                        {loading ? L("جارٍ الحفظ...", "Saving...") : L("تغيير كلمة المرور", "Change Password")}
+                        {loading ? t("profile.action.saving") : t("profile.modal.title")}
                     </button>
                     <button
                         onClick={onClose}
@@ -228,7 +228,7 @@ function ChangePasswordModal({ onClose, L }) {
                             transition: "border-color 0.2s",
                         }}
                     >
-                        {L("إلغاء", "Cancel")}
+                        {t("profile.action.cancel")}
                     </button>
                 </div>
             </div>
@@ -238,8 +238,13 @@ function ChangePasswordModal({ onClose, L }) {
 
 /* ══ MAIN COMPONENT ══ */
 export default function StudentProfile() {
-    const [theme, setTheme] = useState("light");
-    const [lang, setLang] = useState("ar");
+    const { t, i18n } = useTranslation();
+    const lang = i18n.language || "ar";
+    const setLang = (l) => {
+        i18n.changeLanguage(l);
+        document.documentElement.setAttribute("dir", l === "ar" ? "rtl" : "ltr");
+        document.documentElement.setAttribute("lang", l);
+    };
     const [menuOpen, setMenuOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
     const [hoveredMenu, setHoveredMenu] = useState(null);
@@ -252,7 +257,7 @@ export default function StudentProfile() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // ← Guard يمنع الاستدعاء المزدوج في React StrictMode
+    // Guard يمنع الاستدعاء المزدوج في React StrictMode
     const hasFetched = useRef(false);
 
     // ══ EDIT STATE ══
@@ -276,7 +281,7 @@ export default function StudentProfile() {
     // ══ CHANGE PASSWORD MODAL STATE ══
     const [showPasswordModal, setShowPasswordModal] = useState(false);
 
-    // ══ FETCH PROFILE — مرة واحدة فقط ══
+    // ══ FETCH PROFILE ══
     const fetchProfile = async () => {
         setLoading(true);
         setError(null);
@@ -291,8 +296,6 @@ export default function StudentProfile() {
     };
 
     useEffect(() => {
-        // ← هذا الـ guard هو الحل لمشكلة الـ 4 calls
-        // React StrictMode بيشغّل كل effect مرتين في dev، والـ ref بيمنع التكرار
         if (hasFetched.current) return;
         hasFetched.current = true;
         fetchProfile();
@@ -325,14 +328,13 @@ export default function StudentProfile() {
         setAvatarFile(null);
     };
 
-    // ══ حفظ التعديلات — مُصلَح للصور ══
+    // ══ حفظ التعديلات ══
     const handleSave = async () => {
         setSaveLoading(true);
         setSaveError("");
         setSaveSuccess(false);
 
         try {
-            // احسب الحقول المتغيرة فقط
             const changed = {};
             Object.keys(editForm).forEach(key => {
                 if (editForm[key] !== (profile[key] || "")) {
@@ -343,7 +345,6 @@ export default function StudentProfile() {
             const hasChanges = Object.keys(changed).length > 0;
             const hasNewAvatar = !!avatarFile;
 
-            // لو ما في شي اتغير، اغلق وضع التعديل بس
             if (!hasChanges && !hasNewAvatar) {
                 setIsEditing(false);
                 return;
@@ -352,20 +353,13 @@ export default function StudentProfile() {
             let updated;
 
             if (hasNewAvatar) {
-                // ← الإصلاح الأساسي: استخدام FormData بدل JSON لإرسال الصورة
                 const formData = new FormData();
-
-                // أضف كل الحقول المتغيرة
                 Object.keys(changed).forEach(key => {
                     formData.append(key, changed[key]);
                 });
-
-                // أضف ملف الصورة — اسم الحقل "profile_picture" حسب ما يتوقع الباك
                 formData.append("profile_picture", avatarFile, avatarFile.name);
-
                 updated = await updateProfile(formData);
             } else {
-                // لا يوجد صورة جديدة — أبعت JSON عادي
                 updated = await updateProfile(changed);
             }
 
@@ -384,7 +378,7 @@ export default function StudentProfile() {
             setSaveError(
                 errData
                     ? Object.values(errData).flat().join(" ")
-                    : L("فشل الحفظ. حاول مرة أخرى.", "Save failed. Please try again.")
+                    : t("profile.error.saveFailed")
             );
         } finally {
             setSaveLoading(false);
@@ -397,27 +391,25 @@ export default function StudentProfile() {
         if (!file) return;
 
         if (!file.type.startsWith("image/")) {
-            setSaveError(L("الملف يجب أن يكون صورة", "File must be an image"));
+            setSaveError(t("profile.error.imageType"));
             return;
         }
         if (file.size > 5 * 1024 * 1024) {
-            setSaveError(L("الصورة يجب أن تكون أقل من 5MB", "Image must be less than 5MB"));
+            setSaveError(t("profile.error.imageSize"));
             return;
         }
 
         setAvatarFile(file);
-        // أنشئ preview URL مؤقت للعرض فقط، ما بينعكس على الباك
         setAvatarPreview(URL.createObjectURL(file));
         setSaveError("");
     };
 
     // ══ SIDE EFFECTS ══
     useEffect(() => {
-        document.documentElement.setAttribute("data-theme", theme);
         document.documentElement.setAttribute("data-lang", lang);
         document.documentElement.setAttribute("lang", lang);
         document.documentElement.setAttribute("dir", lang === "ar" ? "rtl" : "ltr");
-    }, [theme, lang]);
+    }, [lang]);
 
     useEffect(() => {
         const onScroll = () => setScrolled(window.scrollY > 20);
@@ -450,13 +442,11 @@ export default function StudentProfile() {
         };
     }, []);
 
-    const L = (ar, en) => (lang === "ar" ? ar : en);
     const isAr = lang === "ar";
-
-    const texts = isAr ? Ara : Eng;
-    const navT = texts.nav;
-    const menuT = texts.menu;
-    const footer = texts.footer;
+    const tProfile = t("profile", { returnObjects: true });
+    const navT = t("nav", { returnObjects: true });
+    const menuT = t("menu", { returnObjects: true });
+    const footer = t("footer", { returnObjects: true });
 
     // ══ MAP API → UI ══
     const student = profile ? {
@@ -474,28 +464,12 @@ export default function StudentProfile() {
         orcid_id: profile.orcid_id || "",
     } : null;
 
-    const stats = profile ? [
-        { value: profile.publications_count ?? "—", labelAr: "بحث منشور", labelEn: "Published", deltaAr: null, deltaEn: null },
-        { value: profile.total_reads?.toLocaleString() ?? "—", labelAr: "مرة قُرئت الأبحاث", labelEn: "Total Reads", deltaAr: null, deltaEn: null },
-        { value: profile.citations_count ?? "—", labelAr: "اقتباس علمي", labelEn: "Citations", deltaAr: null, deltaEn: null },
-        { value: profile.reputation_score ?? "—", labelAr: "نقطة تقييم", labelEn: "Reputation Score", deltaAr: null, deltaEn: null },
-    ] : [];
-
-    const researchItems = profile?.research || profile?.publications || [];
-    const level = null;
-    const skills = profile?.skills || profile?.research_areas || [];
-    const socialLinks = profile ? [
-        profile.email && { icon: "✉", label: profile.email, href: `mailto:${profile.email}` },
-    ].filter(Boolean) : [];
-
-    /* ── RENDER ── */
     return (
         <>
             <div className="cursor-glow" ref={cursorRef} />
 
             <Navbar
                 menuOpen={menuOpen} setMenuOpen={setMenuOpen}
-                theme={theme} setTheme={setTheme}
                 lang={lang} setLang={setLang}
                 hoveredMenu={hoveredMenu} setHoveredMenu={setHoveredMenu}
                 scrolled={scrolled}
@@ -505,7 +479,7 @@ export default function StudentProfile() {
             />
 
             {loading && <ProfileSkeleton />}
-            {!loading && error && <ProfileError message={error} onRetry={fetchProfile} L={L} />}
+            {!loading && error && <ProfileError message={error} onRetry={fetchProfile} t={t} />}
 
             {!loading && !error && profile && (
                 <>
@@ -515,9 +489,9 @@ export default function StudentProfile() {
                         <div className="hero-glow-2" />
                         <div className="hero-inner">
                             <div className="ph-breadcrumb">
-                                <a href="/">{L("الرئيسية", "Home")}</a>
+                                <a href="/">{tProfile.breadcrumb.home}</a>
                                 <span className="ph-sep">›</span>
-                                <span>{L("بروفايل الطالب", "Student Profile")}</span>
+                                <span>{tProfile.breadcrumb.profile}</span>
                             </div>
 
                             <div className="profile-card-top">
@@ -560,34 +534,34 @@ export default function StudentProfile() {
                                         /* ══ وضع التعديل ══ */
                                         <div style={{ display: "flex", flexDirection: "column", gap: 0, minWidth: 280 }}>
                                             <EditField
-                                                label={L("الاسم الكامل", "Full Name")}
+                                                label={tProfile.field.fullName}
                                                 value={editForm.full_name}
                                                 onChange={v => setEditForm(f => ({ ...f, full_name: v }))}
-                                                placeholder={L("أدخل اسمك الكامل", "Enter your full name")}
+                                                placeholder={tProfile.placeholder.fullName}
                                             />
                                             <EditField
-                                                label={L("المؤسسة / الجامعة", "Institution")}
+                                                label={tProfile.field.institution}
                                                 value={editForm.institution}
                                                 onChange={v => setEditForm(f => ({ ...f, institution: v }))}
-                                                placeholder={L("جامعة الشام الخاصة", "Al-Sham Private University")}
+                                                placeholder={tProfile.placeholder.institution}
                                             />
                                             <EditField
-                                                label="ORCID ID"
+                                                label={tProfile.field.orcid}
                                                 value={editForm.orcid_id}
                                                 onChange={v => setEditForm(f => ({ ...f, orcid_id: v }))}
-                                                placeholder="0000-0000-0000-0000"
+                                                placeholder={tProfile.placeholder.orcid}
                                             />
 
                                             {/* الدور */}
                                             <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
                                                 <label style={{ fontSize: 11, color: "var(--tx3)", fontWeight: 600, letterSpacing: "0.05em" }}>
-                                                    {L("الدور", "Role")}
+                                                    {tProfile.field.role}
                                                 </label>
                                                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                                                     {[
-                                                        { val: "author", arLabel: "مؤلف / باحث" },
-                                                        { val: "reviewer", arLabel: "مراجع" },
-                                                        { val: "editor", arLabel: "محرر" },
+                                                        { val: "author", label: tProfile.roleOptions.author },
+                                                        { val: "reviewer", label: tProfile.roleOptions.reviewer },
+                                                        { val: "editor", label: tProfile.roleOptions.editor },
                                                     ].map(opt => (
                                                         <button
                                                             key={opt.val}
@@ -605,27 +579,27 @@ export default function StudentProfile() {
                                                                 transition: "all 0.2s",
                                                             }}
                                                         >
-                                                            {L(opt.arLabel, opt.val.charAt(0).toUpperCase() + opt.val.slice(1))}
+                                                            {opt.label}
                                                         </button>
                                                     ))}
                                                 </div>
                                             </div>
 
                                             <EditField
-                                                label={L("نبذة شخصية", "Bio")}
+                                                label={tProfile.field.bio}
                                                 value={editForm.bio}
                                                 onChange={v => setEditForm(f => ({ ...f, bio: v }))}
                                                 type="textarea"
-                                                placeholder={L("اكتب نبذة مختصرة عنك...", "Write a short bio...")}
+                                                placeholder={tProfile.placeholder.bio}
                                             />
 
                                             {/* اللغة المفضلة */}
                                             <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 16 }}>
                                                 <label style={{ fontSize: 11, color: "var(--tx3)", fontWeight: 600, letterSpacing: "0.05em" }}>
-                                                    {L("اللغة المفضلة", "Preferred Language")}
+                                                    {tProfile.field.preferredLanguage}
                                                 </label>
                                                 <div style={{ display: "flex", gap: 8 }}>
-                                                    {[{ val: "ar", label: "العربية" }, { val: "en", label: "English" }].map(opt => (
+                                                    {[{ val: "ar", label: tProfile.languageOptions.ar }, { val: "en", label: tProfile.languageOptions.en }].map(opt => (
                                                         <button
                                                             key={opt.val}
                                                             onClick={() => setEditForm(f => ({ ...f, preferred_language: opt.val }))}
@@ -656,7 +630,7 @@ export default function StudentProfile() {
                                             )}
                                             {saveSuccess && (
                                                 <div style={{ fontSize: 12, color: "#2A8A5A", marginBottom: 10, padding: "8px 12px", background: "rgba(42,138,90,0.08)", borderRadius: 6 }}>
-                                                    {L("✓ تم الحفظ بنجاح", "✓ Saved successfully")}
+                                                    {tProfile.action.saved}
                                                 </div>
                                             )}
 
@@ -679,255 +653,52 @@ export default function StudentProfile() {
                                                         transition: "opacity 0.2s",
                                                     }}
                                                 >
-                                                    {saveLoading ? L("جارٍ الحفظ...", "Saving...") : L("حفظ التغييرات", "Save Changes")}
+                                                    {saveLoading ? tProfile.action.saving : tProfile.action.save}
                                                 </button>
                                                 <button
                                                     onClick={handleCancelEdit}
                                                     disabled={saveLoading}
                                                     style={{
-                                                        padding: "9px 22px",
-                                                        background: "transparent",
-                                                        color: "var(--tx2)",
-                                                        border: "1px solid var(--bdr)",
-                                                        borderRadius: 8,
-                                                        cursor: "pointer",
-                                                        fontSize: 13,
-                                                        fontFamily: "inherit",
+                                                        padding: "9px 22px", background: "transparent", color: "var(--tx2)",
+                                                        border: "1px solid var(--bdr)", borderRadius: 8,
+                                                        cursor: "pointer", fontSize: 13, fontFamily: "inherit",
                                                         transition: "border-color 0.2s",
                                                     }}
                                                 >
-                                                    {L("إلغاء", "Cancel")}
+                                                    {tProfile.action.cancel}
                                                 </button>
                                             </div>
                                         </div>
                                     ) : (
-                                        /* ══ وضع العرض ══ */
-                                        <>
-                                            <div className="profile-role-tag">
-                                                <span>●</span>
-                                                <span>{L(student.roleAr, student.roleEn)}</span>
+                                        /* ══ الوضع الطبيعي (عرض البيانات) ══ */
+                                        <div>
+                                            <h2>{isAr ? student.nameAr : student.nameEn}</h2>
+                                            <p>{isAr ? student.roleAr : student.roleEn} - {isAr ? student.universityAr : student.universityEn}</p>
+                                            <p style={{ marginTop: 8, color: "var(--tx2)" }}>{student.bio}</p>
+                                            <div style={{ display: "flex", gap: 12, marginTop: 16 }}>
+                                                <button 
+                                                    onClick={handleStartEdit}
+                                                    style={{ padding: "8px 16px", background: "var(--ac)", color: "#fff", border: "none", borderRadius: 6, cursor: "pointer" }}
+                                                >
+                                                    {tProfile.action.edit}
+                                                </button>
+                                                <button 
+                                                    onClick={() => setShowPasswordModal(true)}
+                                                    style={{ padding: "8px 16px", background: "transparent", color: "var(--tx2)", border: "1px solid var(--bdr)", borderRadius: 6, cursor: "pointer" }}
+                                                >
+                                                    {t("profile.modal.title")}
+                                                </button>
                                             </div>
-                                            <div className="profile-name">{student.nameAr}</div>
-                                            {student.bio && (
-                                                <div style={{ fontSize: 13, color: "var(--tx2)", marginTop: 4, maxWidth: 420, lineHeight: 1.6 }}>
-                                                    {student.bio}
-                                                </div>
-                                            )}
-                                            <div className="profile-meta">
-                                                {student.institution && (
-                                                    <div className="profile-meta-item">🏛️ {student.institution}</div>
-                                                )}
-                                                {student.institution && <div className="profile-meta-dot" />}
-                                                <div className="profile-meta-item">📍 {L(student.universityAr, student.universityEn)}</div>
-                                                {student.orcid_id && (
-                                                    <>
-                                                        <div className="profile-meta-dot" />
-                                                        <div className="profile-meta-item">🔬 ORCID: {student.orcid_id}</div>
-                                                    </>
-                                                )}
-                                            </div>
-                                        </>
+                                        </div>
                                     )}
                                 </div>
-
-                                {/* أزرار التعديل */}
-                                {!isEditing && (
-                                    <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-                                        <button className="edit-btn" onClick={handleStartEdit}>
-                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                            </svg>
-                                            {L("تعديل البروفايل", "Edit Profile")}
-                                        </button>
-                                        <button className="edit-btn" onClick={() => setShowPasswordModal(true)}>
-                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                                            </svg>
-                                            {L("تغيير كلمة المرور", "Change Password")}
-                                        </button>
-                                    </div>
-                                )}
                             </div>
                         </div>
-
-                        {/* Stats strip */}
-                        <div className="stats-strip">
-                            {stats.map((s, i) => (
-                                <div className="stat-cell" key={i}>
-                                    <div className="stat-n">{s.value}</div>
-                                    <div className="stat-l">{L(s.labelAr, s.labelEn)}</div>
-                                    {s.deltaAr && <div className="stat-delta">▲ {L(s.deltaAr, s.deltaEn)}</div>}
-                                </div>
-                            ))}
-                        </div>
                     </div>
-
-                    {/* TABS */}
-                    <div className="profile-tabs">
-                        {[
-                            { key: "research", ar: "الأبحاث", en: "Research" },
-                            { key: "info", ar: "المعلومات الأساسية", en: "Basic Info" },
-                            { key: "activity", ar: "النشاط", en: "Activity" },
-                        ].map((tab) => (
-                            <button
-                                key={tab.key}
-                                className={`ptab${activeTab === tab.key ? " on" : ""}`}
-                                onClick={() => setActiveTab(tab.key)}
-                            >
-                                {L(tab.ar, tab.en)}
-                            </button>
-                        ))}
-                    </div>
-
-                    {/* PAGE BODY */}
-                    <div className="page-body">
-                        <div>
-                            {/* TAB: RESEARCH */}
-                            {activeTab === "research" && (
-                                <div>
-                                    <div className="section-label">{L("الأبحاث المنشورة", "Published Research")}</div>
-                                    {researchItems.length === 0 ? (
-                                        <div className="empty-state">
-                                            <div className="empty-state-ico">📄</div>
-                                            <div className="empty-state-t">{L("لا توجد أبحاث بعد", "No research yet")}</div>
-                                        </div>
-                                    ) : (
-                                        <div className="research-list">
-                                            {researchItems.map((item, i) => (
-                                                <div className="research-item" key={item.id || i}>
-                                                    <div>
-                                                        <div className="ri-type">{item.type || item.category || ""}</div>
-                                                        <div className="ri-title">{item.title || item.title_ar || ""}</div>
-                                                        <div className="ri-meta">
-                                                            {item.date && <div className="ri-meta-item">📅 {item.date}</div>}
-                                                            {item.reads != null && <div className="ri-meta-item">👁 {item.reads?.toLocaleString()} {L("قراءة", "reads")}</div>}
-                                                            {item.citations != null && <div className="ri-meta-item">🔗 {item.citations} {L("اقتباس", "citations")}</div>}
-                                                        </div>
-                                                    </div>
-                                                    <div className="ri-status">
-                                                        <div className={`ri-badge ${item.status || "draft"}`}>
-                                                            {item.status === "published" && L("منشور", "Published")}
-                                                            {item.status === "review" && L("قيد المراجعة", "Under Review")}
-                                                            {item.status === "draft" && L("مسودة", "Draft")}
-                                                        </div>
-                                                        {item.trending && <div className="ri-reads">⬆ {L("رائج هذا الأسبوع", "Trending")}</div>}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
-
-                            {/* TAB: INFO */}
-                            {activeTab === "info" && (
-                                <div>
-                                    <div className="section-label">{L("المعلومات الأساسية", "Basic Information")}</div>
-                                    <div className="info-card">
-                                        <div className="info-card-title">👤 {L("معلومات الحساب", "Account Info")}</div>
-                                        <div className="info-grid">
-                                            {[
-                                                { labelAr: "الاسم الكامل", labelEn: "Full Name", value: profile.full_name || "—", accent: true },
-                                                { labelAr: "البريد الإلكتروني", labelEn: "Email", value: profile.email || "—", accent: false },
-                                                { labelAr: "المؤسسة", labelEn: "Institution", value: profile.institution || "—", accent: false },
-                                                { labelAr: "ORCID ID", labelEn: "ORCID ID", value: profile.orcid_id || "—", accent: false },
-                                                { labelAr: "اللغة المفضلة", labelEn: "Preferred Language", value: profile.preferred_language === "ar" ? "العربية" : "English", accent: false },
-                                                { labelAr: "الدور", labelEn: "Role", value: profile.role || "—", accent: true },
-                                                { labelAr: "تاريخ الانضمام", labelEn: "Joined", value: profile.created_at ? new Date(profile.created_at).toLocaleDateString(isAr ? "ar-SY" : "en-GB") : "—", accent: false },
-                                                { labelAr: "تأكيد البريد", labelEn: "Email Verified", value: profile.email_verified ? L("مؤكد ✓", "Verified ✓") : L("غير مؤكد", "Not verified"), accent: false },
-                                            ].map((item, i) => (
-                                                <div className="info-item" key={i}>
-                                                    <div className="info-item-label">{L(item.labelAr, item.labelEn)}</div>
-                                                    <div className={`info-item-val${item.accent ? " ac" : ""}`}>{item.value}</div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                        {profile.bio && (
-                                            <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid var(--bdr)" }}>
-                                                <div style={{ fontSize: 11, color: "var(--tx3)", fontWeight: 600, marginBottom: 8 }}>{L("النبذة الشخصية", "Bio")}</div>
-                                                <div style={{ fontSize: 14, color: "var(--tx2)", lineHeight: 1.7 }}>{profile.bio}</div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* TAB: ACTIVITY */}
-                            {activeTab === "activity" && (
-                                <div>
-                                    <div className="section-label">{L("النشاط خلال 12 شهراً", "Activity — Last 12 Months")}</div>
-                                    <div className="info-card">
-                                        <div className="activity-grid">
-                                            {activityGrid.map((col, ci) => (
-                                                <div className="act-col" key={ci}>
-                                                    {col.map((cls, ri) => (
-                                                        <div className={`act-cell${cls ? " " + cls : ""}`} key={ri} />
-                                                    ))}
-                                                </div>
-                                            ))}
-                                        </div>
-                                        <div className="act-labels">
-                                            {[["يناير", "Jan"], ["أبريل", "Apr"], ["يوليو", "Jul"], ["أكتوبر", "Oct"], ["الآن", "Now"]].map(([ar, en]) => (
-                                                <span key={ar}>{L(ar, en)}</span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* SIDEBAR */}
-                        <div>
-                            {level && (
-                                <div className="level-section">
-                                    <div className="section-label">{L("المستوى الأكاديمي", "Academic Level")}</div>
-                                    <div className="level-card">
-                                        <div className="level-header">
-                                            <div className="level-name">{L(level.nameAr, level.nameEn)}</div>
-                                            <div className="level-badge">{level.badge}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-
-                            {skills.length > 0 && (
-                                <div className="side-card">
-                                    <div className="side-card-title">{L("مجالات البحث", "Research Areas")}</div>
-                                    <div className="skills-list">
-                                        {skills.map((s, i) => (
-                                            <span className="skill-tag" key={i}>
-                                                {typeof s === "string" ? s : (s.name || s.label || "")}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                            {socialLinks.length > 0 && (
-                                <div className="side-card">
-                                    <div className="side-card-title">{L("التواصل", "Contact")}</div>
-                                    <div className="social-links">
-                                        {socialLinks.map((link, i) => (
-                                            <a href={link.href} className="social-link" key={i} target="_blank" rel="noreferrer">
-                                                <span className="social-ico">{link.icon}</span>
-                                                {link.label}
-                                            </a>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    <Footer isAr={isAr} footer={footer} Logo={Logo} />
                 </>
             )}
 
-            {showPasswordModal && (
-                <ChangePasswordModal onClose={() => setShowPasswordModal(false)} L={L} />
-            )}
+            <Footer footerT={footer} />
         </>
     );
 }

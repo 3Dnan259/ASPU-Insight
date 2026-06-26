@@ -1,7 +1,8 @@
-import '../styling/Navbar.css'; 
-import { isAuthenticated, logout } from '../api/auth'; 
-import { useNavigate } from 'react-router-dom'; 
-import { Ara, Eng } from '../i18n';
+import '../styling/Navbar.css';
+import { isAuthenticated, logout } from '../api/auth';
+import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '../context/ThemeContext';
 
 // ══ MENU ITEMS — ثابتة وتظهر دائماً بالترتيب الكامل ══
 const MENU_ITEMS = [
@@ -14,23 +15,30 @@ const MENU_ITEMS = [
   { key: "submit",       num: "07", href: "/submit" }, 
 ];
 
-export default function Navbar({ 
-  menuOpen, 
-  setMenuOpen, 
-  theme, 
-  setTheme, 
-  lang, 
-  setLang, 
-  hoveredMenu, 
-  setHoveredMenu, 
-  scrolled, 
-  isAr, 
-  menuT, 
-  navT, 
-  Logo, 
-}) { 
-  const loggedIn = isAuthenticated(); 
-  const navigate = useNavigate(); 
+export default function Navbar({
+  menuOpen,
+  setMenuOpen,
+  hoveredMenu,
+  setHoveredMenu,
+  scrolled,
+  Logo,
+}) {
+  const loggedIn = isAuthenticated();
+  const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  const shared = t('shared', { returnObjects: true });
+  const common = t('auth.common', { returnObjects: true });
+  const menuT = t('menu', { returnObjects: true });
+  const navT = t('nav', { returnObjects: true });
+  const lang = i18n.language || 'ar';
+  const isAr = lang === 'ar';
+  const { theme, setTheme } = useTheme();
+
+  const setLang = (l) => {
+    i18n.changeLanguage(l);
+    document.documentElement.setAttribute('dir', l === 'ar' ? 'rtl' : 'ltr');
+    document.documentElement.setAttribute('lang', l);
+  };
 
   // القائمة كاملة دائماً بدون حذف أي عنصر
   const visibleMenuItems = MENU_ITEMS;
@@ -63,7 +71,7 @@ export default function Navbar({
             <div> 
               <div className="aspu-menu-ln">ASPU Insight</div> 
               <div className="aspu-menu-ls"> 
-                {(isAr ? Ara : Eng).shared.logoTagline} 
+                {shared.logoTagline} 
               </div> 
             </div> 
           </div> 
@@ -122,13 +130,13 @@ export default function Navbar({
             <button className={`aspu-mtp-btn${theme === "dark" ? " on" : ""}`} onClick={() => setTheme("dark")} > 🌙 </button> 
             <button className={`aspu-mtp-btn${theme === "light" ? " on" : ""}`} onClick={() => setTheme("light")} > ☀️ </button> 
           </div> 
-          <div className="aspu-menu-tpill"> 
-            <button className={`aspu-mtp-btn${lang === "ar" ? " on" : ""}`} onClick={() => setLang("ar")} > ع </button> 
-            <button className={`aspu-mtp-btn${lang === "en" ? " on" : ""}`} onClick={() => setLang("en")} > EN </button> 
-          </div> 
+          <div className="aspu-menu-tpill">
+            <button className={`aspu-mtp-btn${lang === 'ar' ? ' on' : ''}`} onClick={() => setLang('ar')} > ع </button>
+            <button className={`aspu-mtp-btn${lang === 'en' ? ' on' : ''}`} onClick={() => setLang('en')} > EN </button>
+          </div>
           {loggedIn ? ( 
             <button className="aspu-menu-login-btn" onClick={handleLogout}> 
-              {isAr ? "تسجيل الخروج" : "Sign Out"} 
+              {common.logout} 
             </button> 
           ) : ( 
             <a href="/Auth" className="aspu-menu-login-btn" onClick={() => setMenuOpen(false)}> 
@@ -144,13 +152,13 @@ export default function Navbar({
           <div> 
             <div className="aspu-logo-n">ASPU Insight</div> 
             <div className="aspu-logo-s"> 
-              {(isAr ? Ara : Eng).shared.secondaryLogoTagline} 
+              {shared.secondaryLogoTagline} 
             </div> 
           </div> 
         </a> 
         <div className="aspu-nav-space" /> 
-        <button className={`aspu-nav-menu-btn${menuOpen ? " is-open" : ""}`} onClick={() => setMenuOpen(true)} > 
-          <span className="aspu-nmb-label">{navT.menu}</span> 
+        <button className={`aspu-nav-menu-btn${menuOpen ? ' is-open' : ''}`} onClick={() => setMenuOpen(true)} >
+          <span className="aspu-nmb-label">{navT.menu}</span>
           <div className="aspu-nmb-lines"> 
             <div className="aspu-nmb-line l1" /> 
             <div className="aspu-nmb-line l2" /> 
