@@ -7,6 +7,9 @@ import PaperDetail from './pages/PaperDetail';
 import StudentProfile from './pages/Profile';
 import Home from './pages/Home';
 import Auth from './pages/Auth/Auth';
+import VerifyEmailPage from './pages/Auth/VerifyEmailPage';
+import ForgotPasswordPage from './pages/Auth/ForgotPasswordPage';
+import ResetPasswordPage from './pages/Auth/ResetPasswordPage';
 import Submit from './pages/Submit';
 
 function App() {
@@ -17,6 +20,9 @@ function App() {
         <Routes>
           <Route path="/"                  element={<Home />} />
           <Route path="/auth"              element={<Auth />} />
+          <Route path="/verify-email"      element={<VerifyEmailPage />} />
+          <Route path="/forgot-password"   element={<ForgotPasswordPage />} />
+          <Route path="/reset-password"    element={<ResetPasswordPage />} />
           <Route path="/research_review"   element={<ResearchReview />} />
           <Route path="/papers/:id"        element={<PaperDetail />} />   
           <Route

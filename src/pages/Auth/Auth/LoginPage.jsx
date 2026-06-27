@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
 import { login } from "../../../api/auth";
 import InputBox from "../../../components/InputBox";
@@ -7,6 +8,7 @@ import EyeBtn from "../../../components/EyeBtn";
 import ErrorBox from "../../../components/ErrorBox";
 
 export default function LoginPage({ lang, prefillEmail, onQRRequired, onOTPRequired, onGoToRegister }) {
+    const navigate = useNavigate();
     const [email, setEmail] = useState(prefillEmail || "");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
@@ -59,6 +61,7 @@ export default function LoginPage({ lang, prefillEmail, onQRRequired, onOTPRequi
             />
             <button
                 className="auth-forgot"
+                onClick={() => navigate("/forgot-password")}
             >{tLogin.forgot}
             </button>
 
