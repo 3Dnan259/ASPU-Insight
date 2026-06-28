@@ -3,6 +3,16 @@ import api from './client';
 //خالص
 export const login = async (email, password) => {
   const { data } = await api.post('/api/auth/ASPU-2004/login/', { email, password });
+  if (data.access) {
+    localStorage.setItem('access_token', data.access);
+    localStorage.setItem('refresh_token', data.refresh);
+    localStorage.setItem('user', JSON.stringify(data.user));
+  }
+  return data;
+};
+
+export const verify2FA = async (pre_auth_token, otp_code) => {
+  const { data } = await api.post('/api/auth/ASPU-2004/2fa/verify/', { pre_auth_token, otp_code });
   localStorage.setItem('access_token', data.access);
   localStorage.setItem('refresh_token', data.refresh);
   localStorage.setItem('user', JSON.stringify(data.user));

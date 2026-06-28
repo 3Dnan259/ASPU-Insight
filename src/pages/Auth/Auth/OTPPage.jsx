@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useTranslation } from 'react-i18next';
-import { confirm2FA } from "../../../api/auth";
+import { verify2FA, confirm2FA } from "../../../api/auth";
 import Button from "../../../components/Button";
 import ErrorBox from "../../../components/ErrorBox";
 
-export default function OTPPage({ lang, onSuccess }) {
+export default function OTPPage({ lang, preAuthToken, onSuccess }) {
   const { t } = useTranslation();
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
@@ -36,7 +36,10 @@ export default function OTPPage({ lang, onSuccess }) {
     setError("");
     try {
       setLoading(true);
-      const data = await confirm2FA(code);
+
+      const data = preAuthToken
+        ? await verify2FA(preAuthToken, code)
+        : await confirm2FA(code);
       onSuccess(data);
     } catch (e) {
       const msg = e?.response?.data;
