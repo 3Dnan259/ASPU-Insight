@@ -25,7 +25,7 @@ export default function LoginPage({ lang, prefillEmail, onQRRequired, onOTPRequi
             setLoading(true);
             const data = await login(email, password);
             if (data.requires_2fa === false) { onQRRequired(); }
-            else { onOTPRequired(); }
+            else { onOTPRequired(data.pre_auth_token); }
         } catch (e) {
             const msg = e?.response?.data;
             if (typeof msg === "object") {

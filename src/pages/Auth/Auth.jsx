@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
 import AuthLayout from "../../components/AuthLayout";
 import LoginPage from "./Auth/LoginPage";
@@ -9,15 +10,20 @@ import "../../styling/auth.css";
 export default function Auth() {
   const [step, setStep] = useState("login");
   const [prefillEmail, setPrefillEmail] = useState("");
+  const [preAuthToken, setPreAuthToken] = useState(null);
   const [lang, setLang] = useState("ar");
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     i18n.changeLanguage(lang);
   }, [lang, i18n]);
 
   const goToLogin = (email) => { setPrefillEmail(email); setStep("login"); };
-  const onSuccess = (data) => { setStep("done"); console.log("✅ logged in:", data); };
+  const onSuccess = (data) => {
+    setStep("done");
+    setTimeout(() => window.location.href = "/", 2000);
+  };
 
   const sharedLayout = (content) => (
     <AuthLayout
@@ -33,7 +39,7 @@ export default function Auth() {
   if (step === "login") return sharedLayout(
     <LoginPage lang={lang} prefillEmail={prefillEmail}
       onQRRequired={() => setStep("qr")}
-      onOTPRequired={() => setStep("otp")}
+      onOTPRequired={(token) => { setPreAuthToken(token); setStep("otp"); }}
       onGoToRegister={() => setStep("register")} />
   );
 
@@ -46,7 +52,7 @@ export default function Auth() {
   );
 
   if (step === "otp") return sharedLayout(
-    <OTPPage lang={lang} onSuccess={onSuccess} />
+    <OTPPage lang={lang} preAuthToken={preAuthToken} onSuccess={onSuccess} />
   );
 
   if (step === "done") return sharedLayout(
